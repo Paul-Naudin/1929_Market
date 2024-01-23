@@ -13,7 +13,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o
+	find . -name "*.o" -type f -delete
 
 fclean: clean
 	rm -rf $(EXECUTABLE).out
