@@ -2,11 +2,12 @@
 
 #include "IOrder.h"
 #include <list>
+#include <string>
 
 class Order : public IOrder {
 public:
 
-    Order(int id, int quantity, double pricen, bool isBid);
+    Order(std::string id, int quantity, double pricen, bool isBid);
     ~Order();
 
     inline bool operator<(const Order& other) const {
@@ -14,7 +15,7 @@ public:
     }
 
     int getQuantity() const override;
-    int getId() const override;
+    std::string getId() const override;
     double getPrice() const override;
     bool getIsBid() const override;
 
@@ -24,6 +25,6 @@ public:
 private:
     double price;
     int quantity;
-    int id;
+    std::string id;
     bool isBid;
 };

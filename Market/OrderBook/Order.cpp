@@ -1,8 +1,9 @@
 
 #include "Order.h"
+#include <string>
 
 // Constructor
-Order::Order(int id, int quantity, double price, bool isBid) : price(price), quantity(quantity), id(id), isBid(isBid) {}
+Order::Order(std::string id, int quantity, double price, bool isBid) : price(price), quantity(quantity), id(id), isBid(isBid) {}
 
 // Destructor
 Order::~Order() {}
@@ -18,7 +19,7 @@ int Order::getQuantity() const {
 }
 
 // id getter
-int Order::getId() const {
+std::string Order::getId() const {
     return id;
 }
 

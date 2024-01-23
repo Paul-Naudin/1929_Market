@@ -2,8 +2,11 @@
 #include <map>
 #include <unordered_map>
 #include <deque>
+#include <string>
 #include "IOrderBook.h"
 #include "Order.h"
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 
 class OrderBook : public IOrderBook {
@@ -11,19 +14,21 @@ public:
     OrderBook();
     ~OrderBook();
 
-    bool addOrder(double price, int id, int quantity, bool isBid);
-    bool removeOrder(int id);
-    bool modifyOrder(int id, int newQuantity, int newPrice);
+    std::string addOrder(double price, int quantity, bool isBid);
+    bool removeOrder(std::string id);
+    bool modifyOrder(std::string id, int newQuantity, int newPrice);
 
     bool execute();
 
-    const std::map<double, std::deque<Order *>> getBids() const override;
-    const std::map<double, std::deque<Order *>, std::greater<double>> getAsks() const override;
+    const std::map<double, std::deque<Order *>, std::greater<double>> getBids() const override;
+    const std::map<double, std::deque<Order *>> getAsks() const override;
     
     void printOrderBook() const;
 
+    static std::string generateId();
+
 private:
-    std::unordered_map<int, Order *> orders;
-    std::map<double, std::deque<Order *>> bids;
-    std::map<double, std::deque<Order *>, std::greater<double>> asks;
+    std::unordered_map<std::string, Order *> orders;
+    std::map<double, std::deque<Order *>, std::greater<double>> bids;
+    std::map<double, std::deque<Order *>> asks;
 };
