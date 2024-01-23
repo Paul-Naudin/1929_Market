@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -Wextra
+CFLAGS=-c -Wall -Wextra -lboost_system -lboost_filesystem
 SOURCES=$(shell find . -name "*.cpp")
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=market
