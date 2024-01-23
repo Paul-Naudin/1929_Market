@@ -1,5 +1,7 @@
 #pragma once
 #include <map>
+#include <unordered_map>
+#include <deque>
 #include "IOrderBook.h"
 #include "Order.h"
 
@@ -15,12 +17,13 @@ public:
 
     bool execute();
 
-    const std::multimap<double, Order> getBids() const override;
-    const std::multimap<double, Order, std::greater<double>> getAsks() const override;
+    const std::map<double, std::deque<Order *>> getBids() const override;
+    const std::map<double, std::deque<Order *>, std::greater<double>> getAsks() const override;
     
     void printOrderBook() const;
 
 private:
-    std::multimap<double, Order> bids;
-    std::multimap<double, Order, std::greater<double>> asks;
+    std::unordered_map<int, Order *> orders;
+    std::map<double, std::deque<Order *>> bids;
+    std::map<double, std::deque<Order *>, std::greater<double>> asks;
 };

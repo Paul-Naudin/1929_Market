@@ -5,23 +5,25 @@
 
 class Order : public IOrder {
 public:
-    struct Data {
-        int quantity;
-        int id;
-    };
 
-    Order(double price);
+    Order(int id, int quantity, double pricen, bool isBid);
     ~Order();
 
     inline bool operator<(const Order& other) const {
         return price < other.price;
     }
 
-    int getNumber() const override;
     int getQuantity() const override;
+    int getId() const override;
     double getPrice() const override;
+    bool getIsBid() const override;
+
+    void setQuantity(int newQuantity) override;
+    void setPrice(double newPrice) override;
 
 private:
     double price;
-    std::list<Data> dataList;
+    int quantity;
+    int id;
+    bool isBid;
 };

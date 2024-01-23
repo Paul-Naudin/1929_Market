@@ -14,7 +14,6 @@ public:
 
     virtual bool execute() = 0;
 
-    virtual const std::multimap<double, Order> getBids() const = 0;
-    virtual const std::multimap<double, Order, std::greater<double>> getAsks() const = 0;
-
+    virtual const std::map<double, std::deque<Order *>> getBids() const = 0;
+    virtual const std::map<double, std::deque<Order *>, std::greater<double>> getAsks() const = 0;
 };
