@@ -3,24 +3,13 @@ project(1929_Market)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# FIX Protocol library
-add_library(FIXProtocol
-    Common/FIXProtocol.cpp
-)
-target_include_directories(FIXProtocol PUBLIC FIXProtocol)
+# Enable testing
+enable_testing()
 
-# Market executable
-add_executable(Market
-    Market/main.cpp
-    Market/OrderBook/OrderBook.cpp
-    Market/OrderBook/Order.cpp
-)
-target_include_directories(Market PRIVATE Market/OrderBook)
-target_link_libraries(Market PRIVATE FIXProtocol)
+# Add sub-projects
+add_subdirectory(Common)
+add_subdirectory(Client)
+add_subdirectory(Market)
 
-# Client executable
-add_executable(Client
-    Client/main.cpp
-)
-target_include_directories(Client PRIVATE Client/Order)
-target_link_libraries(Client PRIVATE FIXProtocol)
+# Add tests
+add_subdirectory(Market/tests)
