@@ -16,6 +16,8 @@ int main() {
 
     orderBook.addOrder(105, 10, true);
 
+    orderBook.printOrderBook();
+
     orderBook.execute();
 
     orderBook.printOrderBook();
