@@ -1,6 +1,7 @@
 # Market tests
 add_executable(MarketTests
     OrderTests.cpp
+    OrderBookTests.cpp
 )
 
 # Fetch Google Test
