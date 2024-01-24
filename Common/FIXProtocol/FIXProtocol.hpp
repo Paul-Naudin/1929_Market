@@ -69,8 +69,8 @@ namespace FIXProtocol
 
         void parseField(const std::string &field);
 
-        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength, int heartBtInt = 30,
-                              std::string user, std::string password);
+        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength, 
+                              std::string user, std::string password, int heartBtInt = 30);
         void deserialize(const std::string &data);
 
         // Getter et Setter
