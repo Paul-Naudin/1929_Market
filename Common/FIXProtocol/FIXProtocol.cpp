@@ -1,6 +1,16 @@
 #include "FIXProtocol.hpp"
 #include <vector>
 
+void splitString(const std::string &input, char delimiter, std::vector<std::string> &result)
+{
+    std::istringstream stream(input);
+    std::string token;
+    while (std::getline(stream, token, delimiter))
+    {
+        result.push_back(token);
+    }
+}
+
 namespace FIXProtocol
 {
     const std::string &FIXMessage::getBeginString() const
@@ -53,7 +63,7 @@ namespace FIXProtocol
         return msgSeqNum;
     }
 
-    void FIXMessage::setMsgSeqNum(int value = 1)
+    void FIXMessage::setMsgSeqNum(int value)
     {
         msgSeqNum += value;
     }
@@ -159,8 +169,8 @@ namespace FIXProtocol
     }
 
     const std::string LogonMessage::serialize(std::string sendCompID,
-                                              std::string targetCompID, int bodyLength, int heartBtInt = 30,
-                                              std::string user, std::string password)
+                                              std::string targetCompID, int bodyLength, 
+                                              std::string user, std::string password, int heartBtInt)
     {
         setMsgType("A");
         setSenderCompID(sendCompID);
@@ -246,12 +256,3 @@ namespace FIXProtocol
 
 } // namespace FIXProtocol
 
-void splitString(const std::string &input, char delimiter, std::vector<std::string> &result)
-{
-    std::istringstream stream(input);
-    std::string token;
-    while (std::getline(stream, token, delimiter))
-    {
-        result.push_back(token);
-    }
-}
