@@ -217,6 +217,7 @@ const std::map<double, std::deque<Order *>> OrderBook::getAsks() const
 // Print the order book
 void OrderBook::printOrderBook() const
 {
+    std::cout << "----------------------------------------" << std::endl;
     std::cout << "Bids:" << std::endl;
     for (const auto &bid : bids)
     {

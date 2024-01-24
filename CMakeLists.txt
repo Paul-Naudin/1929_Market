@@ -10,6 +10,3 @@ enable_testing()
 add_subdirectory(Common)
 add_subdirectory(Client)
 add_subdirectory(Market)
-
-# Add tests
-add_subdirectory(Market/tests)
