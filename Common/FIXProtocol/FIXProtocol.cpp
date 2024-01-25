@@ -93,7 +93,7 @@ namespace FIXProtocol
         sendingTime = value;
     }
 
-        int FIXMessage::getCheckSum() const
+    int FIXMessage::getCheckSum() const
     {
         return checkSum;
     }
@@ -111,66 +111,32 @@ namespace FIXProtocol
         checkSum = sum % 256;
     }
 
-    // Derived classes
-
-    void LogonMessage::parseField(const std::string &field)
+    std::string FIXMessage::formatHeader() const
     {
-        size_t equalPos = field.find('=');
-        if (equalPos != std::string::npos)
-        {
-            std::string tag = field.substr(0, equalPos);
-            std::string value = field.substr(equalPos + 1);
-
-            switch (std::stoi(tag))
-            {
-            // Header
-            case 9: // BodyLength
-                setBodyLength(std::stoi(value));
-                break;
-            case 35: // MsgType
-                setMsgType(value);
-                break;
-            case 49: // SenderCompID
-                setSenderCompID(value);
-                break;
-            case 56: // TargetCompID
-                setTargetCompID(value);
-                break;
-            case 34: // MsgSeqNum
-                setMsgSeqNum(std::stoi(value));
-                break;
-            case 52: // SendingTime
-                setSendingTime(value);
-                break;
-
-            // Body
-            case 98: // EncryptMethod
-                setEncryptMethod(value);
-                break;
-            case 108: // HeartBtInt
-                setHeartBtInt(std::stoi(value));
-                break;
-            case 553: // Username
-                setUsername(value);
-                break;
-            case 554: // Password
-                setPassword(value);
-                break;
-
-            // Trailer
-            case 10: // CheckSum
-                setCheckSum(value);
-                break;
-
-            default:
-                break;
-            }
-        }
+        std::ostringstream oss;
+        oss << "8=" << beginString << SOH
+            << "9=" << bodyLength << SOH
+            << "35=" << msgType << SOH
+            << "49=" << senderCompID << SOH
+            << "56=" << targetCompID << SOH
+            << "34=" << msgSeqNum << SOH
+            << "52=" << sendingTime << SOH;
+        return oss.str();
     }
 
+    std::string FIXMessage::formatTrailer(const std::string &message)
+    {
+        std::ostringstream oss;
+        setCheckSum(message);
+        oss << "10=" << getCheckSum() << SOH;
+        return oss.str();
+    }
+
+    // Derived classes
+
+    // LOGON
     const std::string LogonMessage::serialize(std::string sendCompID,
-                                              std::string targetCompID, int bodyLength, 
-                                              std::string user, std::string password, int heartBtInt)
+                                              std::string targetCompID, int bodyLength)
     {
         setMsgType("A");
         setSenderCompID(sendCompID);
@@ -182,41 +148,23 @@ namespace FIXProtocol
         std::ostringstream oss;
 
         // Header
-        oss << "8=" << getBeginString() << SOH
-            << "9=" << getBodyLength() << SOH
-            << "35=" << getMsgType() << SOH
-            << "49=" << getSenderCompID() << SOH
-            << "56=" << getTargetCompID() << SOH
-            << "34=" << getMsgSeqNum() << SOH
-            << "52=" << getSendingTime() << SOH;
+        oss << formatHeader();
 
         // Body (Logon)
-        setEncryptMethod("0");
-        setHeartBtInt(heartBtInt);
-        setUsername(user);
-        setPassword(password);
 
-        oss << "98=" << getEncryptMethod() << SOH
-            << "108=" << getHeartBtInt() << SOH
-            << "553=" << getUsername() << SOH
-            << "554=" << getPassword() << SOH;
+        oss << "98=" << encryptMethod << SOH
+            << "108=" << heartBtInt << SOH;
+
+        if (username != "")
+            oss << "553=" << username << SOH;
+
+        if (password != "")
+            oss << "554=" << password << SOH;
 
         // Trailer
-        setCheckSum(oss.str());
-        oss << "10=" << getCheckSum() << SOH;
+        oss << formatTrailer(oss.str());
 
         return oss.str();
-    }
-
-    void FIXProtocol::LogonMessage::deserialize(const std::string &data)
-    {
-        std::vector<std::string> fields;
-        splitString(data, SOH, fields);
-
-        for (const std::string &field : fields)
-        {
-            parseField(field);
-        }
     }
 
     const std::string &LogonMessage::getEncryptMethod() const
@@ -254,5 +202,478 @@ namespace FIXProtocol
         password = value;
     }
 
-} // namespace FIXProtocol
+    // NEW ORDER
+    std::string NewOrderMessage::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("D");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
 
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "11=" << clOrdID << SOH
+            << "21=" << handlInst << SOH
+            << "55=" << symbol << SOH
+            << "54=" << side << SOH
+            << "60=" << transactTime << SOH
+            << "40=" << ordType << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and setters
+    const std::string &NewOrderMessage::getClOrdID() const
+    {
+        return clOrdID;
+    }
+
+    void NewOrderMessage::setClOrdID(const std::string &value)
+    {
+        clOrdID = value;
+    }
+
+    char NewOrderMessage::getHandlInst() const
+    {
+        return handlInst;
+    }
+
+    void NewOrderMessage::setHandlInst(char value)
+    {
+        handlInst = value;
+    }
+
+    const std::string &NewOrderMessage::getSymbol() const
+    {
+        return symbol;
+    }
+
+    void NewOrderMessage::setSymbol(const std::string &value)
+    {
+        symbol = value;
+    }
+
+    char NewOrderMessage::getSide() const
+    {
+        return side;
+    }
+
+    void NewOrderMessage::setSide(char value)
+    {
+        side = value;
+    }
+
+    const std::string &NewOrderMessage::getTransactTime() const
+    {
+        return transactTime;
+    }
+
+    void NewOrderMessage::setTransactTime(const std::string &value)
+    {
+        transactTime = value;
+    }
+
+    char NewOrderMessage::getOrdType() const
+    {
+        return ordType;
+    }
+
+    void NewOrderMessage::setOrdType(char value)
+    {
+        ordType = value;
+    }
+
+    // ORDER CANCEL / REPLACE REQUEST
+
+    std::string OrderCancelReplaceRequest::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("G");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
+
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "41=" << origClOrdID << SOH
+            << "11=" << clOrdID << SOH
+            << "21=" << handlInst << SOH
+            << "55=" << symbol << SOH
+            << "54=" << side << SOH
+            << "60=" << transactTime << SOH
+            << "40=" << ordType << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and Setters
+    const std::string &OrderCancelReplaceRequest::getOrigClOrdID() const
+    {
+        return origClOrdID;
+    }
+
+    void OrderCancelReplaceRequest::setOrigClOrdID(const std::string &value)
+    {
+        origClOrdID = value;
+    }
+
+    const std::string &OrderCancelReplaceRequest::getClOrdID() const
+    {
+        return clOrdID;
+    }
+
+    void OrderCancelReplaceRequest::setClOrdID(const std::string &value)
+    {
+        clOrdID = value;
+    }
+
+    char OrderCancelReplaceRequest::getHandlInst() const
+    {
+        return handlInst;
+    }
+
+    void OrderCancelReplaceRequest::setHandlInst(char value)
+    {
+        handlInst = value;
+    }
+
+    const std::string &OrderCancelReplaceRequest::getSymbol() const
+    {
+        return symbol;
+    }
+
+    void OrderCancelReplaceRequest::setSymbol(const std::string &value)
+    {
+        symbol = value;
+    }
+
+    char OrderCancelReplaceRequest::getSide() const
+    {
+        return side;
+    }
+
+    void OrderCancelReplaceRequest::setSide(char value)
+    {
+        side = value;
+    }
+
+    const std::string &OrderCancelReplaceRequest::getTransactTime() const
+    {
+        return transactTime;
+    }
+
+    void OrderCancelReplaceRequest::setTransactTime(const std::string &value)
+    {
+        transactTime = value;
+    }
+
+    char OrderCancelReplaceRequest::getOrdType() const
+    {
+        return ordType;
+    }
+
+    void OrderCancelReplaceRequest::setOrdType(char value)
+    {
+        ordType = value;
+    }
+
+    // ORDER CANCEL REQUEST
+    std::string OrderCancelRequest::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("9");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
+
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "37=" << getOrderID() << SOH
+            << "11=" << getClOrdID() << SOH
+            << "41=" << getOrigClOrdID() << SOH
+            << "39=" << getOrdStatus() << SOH
+            << "434=" << getCxlRejResponseTo() << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and Setters
+    const std::string &OrderCancelRequest::getOrderID() const
+    {
+        return orderID;
+    }
+
+    void OrderCancelRequest::setOrderID(const std::string &value)
+    {
+        orderID = value;
+    }
+
+    const std::string &OrderCancelRequest::getClOrdID() const
+    {
+        return clOrdID;
+    }
+
+    void OrderCancelRequest::setClOrdID(const std::string &value)
+    {
+        clOrdID = value;
+    }
+
+    const std::string &OrderCancelRequest::getOrigClOrdID() const
+    {
+        return origClOrdID;
+    }
+
+    void OrderCancelRequest::setOrigClOrdID(const std::string &value)
+    {
+        origClOrdID = value;
+    }
+
+    char OrderCancelRequest::getOrdStatus() const
+    {
+        return ordStatus;
+    }
+
+    void OrderCancelRequest::setOrdStatus(char value)
+    {
+        ordStatus = value;
+    }
+
+    int OrderCancelRequest::getCxlRejResponseTo() const
+    {
+        return cxlRejResponseTo;
+    }
+
+    void OrderCancelRequest::setCxlRejResponseTo(int value)
+    {
+        cxlRejResponseTo = value;
+    }
+
+    // EXECUTION REPORT
+    std::string ExecutionReport::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("8");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
+
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "37=" << getOrderID() << SOH
+            << "17=" << getExecID() << SOH
+            << "150=" << getExecType() << SOH
+            << "39=" << getOrdStatus() << SOH
+            << "55=" << getSymbol() << SOH
+            << "54=" << getSide() << SOH
+            << "151=" << getLeavesQty() << SOH
+            << "14=" << getCumQty() << SOH
+            << "6=" << getAvgPx() << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and Setters
+    const std::string &ExecutionReport::getOrderID() const
+    {
+        return orderID;
+    }
+
+    void ExecutionReport::setOrderID(const std::string &value)
+    {
+        orderID = value;
+    }
+
+    const std::string &ExecutionReport::getExecID() const
+    {
+        return execID;
+    }
+
+    void ExecutionReport::setExecID(const std::string &value)
+    {
+        execID = value;
+    }
+
+    char ExecutionReport::getExecType() const
+    {
+        return execType;
+    }
+
+    void ExecutionReport::setExecType(char value)
+    {
+        execType = value;
+    }
+
+    char ExecutionReport::getOrdStatus() const
+    {
+        return ordStatus;
+    }
+
+    void ExecutionReport::setOrdStatus(char value)
+    {
+        ordStatus = value;
+    }
+
+    const std::string &ExecutionReport::getSymbol() const
+    {
+        return symbol;
+    }
+
+    void ExecutionReport::setSymbol(const std::string &value)
+    {
+        symbol = value;
+    }
+
+    char ExecutionReport::getSide() const
+    {
+        return side;
+    }
+
+    void ExecutionReport::setSide(char value)
+    {
+        side = value;
+    }
+
+    int ExecutionReport::getLeavesQty() const
+    {
+        return leavesQty;
+    }
+
+    void ExecutionReport::setLeavesQty(int value)
+    {
+        leavesQty = value;
+    }
+
+    int ExecutionReport::getCumQty() const
+    {
+        return cumQty;
+    }
+
+    void ExecutionReport::setCumQty(int value)
+    {
+        cumQty = value;
+    }
+
+    double ExecutionReport::getAvgPx() const
+    {
+        return avgPx;
+    }
+
+    void ExecutionReport::setAvgPx(double value)
+    {
+        avgPx = value;
+    }
+
+    // MARKET DATA SNAPSHOT FULL REFRESH
+    std::string MarketDataSnapshotFullRefresh::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("W");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
+
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "268=" << getNoMDEntries() << SOH
+            << "279=" << getMDUpdateAction() << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and Setters
+    int MarketDataSnapshotFullRefresh::getNoMDEntries() const
+    {
+        return noMDEntries;
+    }
+
+    void MarketDataSnapshotFullRefresh::setNoMDEntries(int value)
+    {
+        noMDEntries = value;
+    }
+
+    char MarketDataSnapshotFullRefresh::getMDUpdateAction() const
+    {
+        return mdUpdateAction;
+    }
+
+    void MarketDataSnapshotFullRefresh::setMDUpdateAction(char value)
+    {
+        mdUpdateAction = value;
+    }
+
+    // MARKET DATA INCREMENTAL
+    std::string MarketDataIncrementalRefresh::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
+    {
+        setMsgType("X");
+        setSenderCompID(sendCompID);
+        setTargetCompID(targetCompID);
+        setMsgSeqNum();
+        setSendingTime();
+        setBodyLength(bodyLength);
+
+        std::ostringstream oss;
+
+        oss << formatHeader();
+
+        // Body
+        oss << "55=" << getSymbol() << SOH
+            << "268=" << getNoMDEntries() << SOH;
+
+        oss << formatTrailer(oss.str());
+
+        return oss.str();
+    }
+
+    // Getters and Setters
+    const std::string &MarketDataIncrementalRefresh::getSymbol() const
+    {
+        return symbol;
+    }
+
+    void MarketDataIncrementalRefresh::setSymbol(const std::string &value)
+    {
+        symbol = value;
+    }
+
+    int MarketDataIncrementalRefresh::getNoMDEntries() const
+    {
+        return noMDEntries;
+    }
+
+    void MarketDataIncrementalRefresh::setNoMDEntries(int value)
+    {
+        noMDEntries = value;
+    }
+
+} // namespace FIXProtocol

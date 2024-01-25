@@ -8,7 +8,7 @@
 #include <codecvt>
 #include <iostream>
 
-const char SOH = '\x01'; // séparateur SOH
+const char SOH = '\x01'; // separator SOH
 
 namespace FIXProtocol
 {
@@ -30,7 +30,7 @@ namespace FIXProtocol
         FIXMessage();
         ~FIXMessage();
 
-        // Getters et setters
+        // Getters and setters
         const std::string &getBeginString() const;
 
         int getBodyLength() const;
@@ -54,6 +54,9 @@ namespace FIXProtocol
 
         int getCheckSum() const;
         void setCheckSum(const std::string &message);
+
+        std::string formatHeader() const;
+        std::string formatTrailer(const std::string &message);
     };
 
     class LogonMessage : public FIXMessage
@@ -65,15 +68,11 @@ namespace FIXProtocol
         std::string password;      // Password (554)
 
     public:
-        LogonMessage() : encryptMethod("0") {}
+        LogonMessage() : encryptMethod("0"), username(""), password("") {}
 
-        void parseField(const std::string &field);
+        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength, 
-                              std::string user, std::string password, int heartBtInt = 30);
-        void deserialize(const std::string &data);
-
-        // Getter et Setter
+        // Getter and Setter
         const std::string &getEncryptMethod() const;
         void setEncryptMethod(const std::string &value);
 
@@ -98,10 +97,9 @@ namespace FIXProtocol
         char ordType;             // OrdType (40)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters and setters
         const std::string &getClOrdID() const;
         void setClOrdID(const std::string &value);
 
@@ -133,10 +131,9 @@ namespace FIXProtocol
         char ordType;             // OrdType (40)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters and setters
         const std::string &getOrigClOrdID() const;
         void setOrigClOrdID(const std::string &value);
 
@@ -169,10 +166,9 @@ namespace FIXProtocol
         int cxlRejResponseTo;    // CxlRejResponseTo (434)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters and setters
         const std::string &getOrderID() const;
         void setOrderID(const std::string &value);
 
@@ -203,10 +199,9 @@ namespace FIXProtocol
         double avgPx;        // AvgPx (6)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters a,d setters
         const std::string &getOrderID() const;
         void setOrderID(const std::string &value);
 
@@ -242,10 +237,9 @@ namespace FIXProtocol
         char mdUpdateAction; // MDUpdateAction (279)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters and setters
         int getNoMDEntries() const;
         void setNoMDEntries(int value);
 
@@ -260,10 +254,9 @@ namespace FIXProtocol
         int noMDEntries;    // NoMDEntries (268)
 
     public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
-        // Getters et setters
+        // Getters and setters
         const std::string &getSymbol() const;
         void setSymbol(const std::string &value);
 
