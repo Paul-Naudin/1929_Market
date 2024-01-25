@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "../OrderBook/Order.h"
 
+
 TEST(OrderTests, GettersAndSetters) {
     // Create an Order object
     Order order("123", 10, 100.0, true);
@@ -17,4 +18,13 @@ TEST(OrderTests, GettersAndSetters) {
 
     EXPECT_EQ(order.getPrice(), 200.0);
     EXPECT_EQ(order.getQuantity(), 20);
+}
+
+TEST(OrderTests, LessThanOperator) {
+    // Create two Order objects
+    Order order1("123", 10, 100.0, true);
+    Order order2("124", 20, 200.0, true);
+
+    // Test the < operator
+    EXPECT_TRUE(order1 < order2);
 }
