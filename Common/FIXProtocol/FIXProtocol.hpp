@@ -14,7 +14,7 @@ namespace FIXProtocol
 {
     class FIXMessage
     {
-    private:
+    protected:
         // Header
         inline static const std::string beginString = "8=FIX.4.2\x01"; // BeginString (8)
         int bodyLength;                                                // BodyLength (9)
@@ -29,6 +29,8 @@ namespace FIXProtocol
     public:
         FIXMessage();
         ~FIXMessage();
+
+        std::string extractMsgType(const std::string &message);
 
         // Getters and setters
         const std::string &getBeginString() const;
@@ -59,7 +61,7 @@ namespace FIXProtocol
         std::string formatTrailer(const std::string &message);
     };
 
-    class LogonMessage : public FIXMessage
+    class Logon : public FIXMessage
     {
     private:
         std::string encryptMethod; // EncryptMethod (98)
@@ -68,9 +70,10 @@ namespace FIXProtocol
         std::string password;      // Password (554)
 
     public:
-        LogonMessage() : encryptMethod("0"), username(""), password("") {}
+        Logon() : encryptMethod("0"), username(""), password("") {}
+        Logon(std::string senderComp, std::string targetComp, int length, std::string encryptMethod = 0, int heartBtInt = 30, std::string username = "", std::string password = "");
 
-        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+        const std::string serialize();
 
         // Getter and Setter
         const std::string &getEncryptMethod() const;
@@ -86,7 +89,7 @@ namespace FIXProtocol
         void setPassword(const std::string &value);
     };
 
-    class NewOrderMessage : public FIXMessage
+    class NewOrder : public FIXMessage
     {
     private:
         std::string clOrdID;      // ClOrdID (11)
@@ -97,7 +100,14 @@ namespace FIXProtocol
         char ordType;             // OrdType (40)
 
     public:
-        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+        NewOrder(std::string senderComp, std::string targetComp, int length, std::string clOrdID,
+                 char handlInst,
+                 std::string symbol,
+                 char side,
+                 std::string transactTime,
+                 char ordType);
+
+        std::string serialize();
 
         // Getters and setters
         const std::string &getClOrdID() const;
@@ -131,6 +141,13 @@ namespace FIXProtocol
         char ordType;             // OrdType (40)
 
     public:
+        OrderCancelReplaceRequest(std::string senderComp, std::string targetComp, int length, std::string origClOrdID, std::string clOrdID,
+                                  char handlInst,
+                                  std::string symbol,
+                                  char side,
+                                  std::string transactTime,
+                                  char ordType);
+
         std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
         // Getters and setters
@@ -166,6 +183,10 @@ namespace FIXProtocol
         int cxlRejResponseTo;    // CxlRejResponseTo (434)
 
     public:
+        OrderCancelRequest(std::string senderComp, std::string targetComp, int length, std::string orderID, std::string origClOrdID, std::string clOrdID,
+                           char ordStatus,
+                           int cxlRejResponseTo);
+
         std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
 
         // Getters and setters
@@ -199,7 +220,12 @@ namespace FIXProtocol
         double avgPx;        // AvgPx (6)
 
     public:
-        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+        ExecutionReport(std::string senderComp, std::string targetComp, int length,
+                        std::string orderID, std::string execID, char execType,
+                        char ordStatus, std::string symbol, char side,
+                        int leavesQty, int cumQty, double avgPx);
+
+        std::string serialize();
 
         // Getters a,d setters
         const std::string &getOrderID() const;
@@ -237,7 +263,10 @@ namespace FIXProtocol
         char mdUpdateAction; // MDUpdateAction (279)
 
     public:
-        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+        MarketDataSnapshotFullRefresh(std::string senderComp, std::string targetComp, int length,
+                                      int noMDEntries, char mdUpdateAction);
+
+        std::string serialize();
 
         // Getters and setters
         int getNoMDEntries() const;
@@ -254,7 +283,10 @@ namespace FIXProtocol
         int noMDEntries;    // NoMDEntries (268)
 
     public:
-        std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+        MarketDataIncrementalRefresh(std::string senderComp, std::string targetComp, int length,
+                                     std::string symbol, int noMDEntries);
+
+        std::string serialize();
 
         // Getters and setters
         const std::string &getSymbol() const;
