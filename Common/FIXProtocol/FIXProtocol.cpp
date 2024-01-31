@@ -31,6 +31,59 @@ namespace FIXProtocol
         return "";
     }
 
+    FIXMessage FIXMessage::deserialize(const std::string &message)
+    {
+        std::string msgType = extractMsgType(message);
+
+        if (msgType == "A")
+        {
+            Logon logon;
+            logon.deserialize(message);
+            return logon;
+        }
+        else if (msgType == "D")
+        {
+            NewOrder newOrder;
+            newOrder.deserialize(message);
+            return newOrder;
+        }
+        else if (msgType == "G")
+        {
+            OrderCancelReplaceRequest cancelReplace;
+            cancelReplace.deserialize(message);
+            return cancelReplace;
+        }
+        else if (msgType == "9")
+        {
+            OrderCancelRequest cancelRequest;
+            cancelRequest.deserialize(message);
+            return cancelRequest;
+        }
+        else if (msgType == "8")
+        {
+            ExecutionReport execReport;
+            execReport.deserialize(message);
+            return execReport;
+        }
+        else if (msgType == "W")
+        {
+            MarketDataSnapshotFullRefresh snapshot;
+            snapshot.deserialize(message);
+            return snapshot;
+        }
+        else if (msgType == "X")
+        {
+            MarketDataIncrementalRefresh incremental;
+            incremental.deserialize(message);
+            return incremental;
+        }
+        else
+        {
+            std::cerr << "Type de message non pris en charge : " << msgType << std::endl;
+            return FIXMessage();
+        }
+    }
+
     const std::string &FIXMessage::getBeginString() const
     {
         return beginString;
@@ -187,6 +240,46 @@ namespace FIXProtocol
         return oss.str();
     }
 
+    void Logon::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 49:
+                    setSenderCompID(value);
+                    break;
+                case 56:
+                    setTargetCompID(value);
+                    break;
+                case 34:
+                    setMsgSeqNum(std::stoi(value));
+                    break;
+                case 52:
+                    setSendingTime(value);
+                    break;
+                case 98:
+                    setEncryptMethod(value);
+                    break;
+                case 108:
+                    setHeartBtInt(std::stoi(value));
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     const std::string &Logon::getEncryptMethod() const
     {
         return encryptMethod;
@@ -261,6 +354,46 @@ namespace FIXProtocol
         oss << formatTrailer(oss.str());
 
         return oss.str();
+    }
+
+    void NewOrder::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 11:
+                    setClOrdID(value);
+                    break;
+                case 21:
+                    setHandlInst(value[0]);
+                    break;
+                case 55:
+                    setSymbol(value);
+                    break;
+                case 54:
+                    setSide(value[0]);
+                    break;
+                case 60:
+                    setTransactTime(value);
+                    break;
+                case 40:
+                    setOrdType(value[0]);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
 
     // Getters and setters
@@ -359,6 +492,49 @@ namespace FIXProtocol
         oss << formatTrailer(oss.str());
 
         return oss.str();
+    }
+
+    void OrderCancelReplaceRequest::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 41:
+                    setOrigClOrdID(value);
+                    break;
+                case 11:
+                    setClOrdID(value);
+                    break;
+                case 21:
+                    setHandlInst(value[0]);
+                    break;
+                case 55:
+                    setSymbol(value);
+                    break;
+                case 54:
+                    setSide(value[0]);
+                    break;
+                case 60:
+                    setTransactTime(value);
+                    break;
+                case 40:
+                    setOrdType(value[0]);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
 
     // Getters and Setters
@@ -462,6 +638,43 @@ namespace FIXProtocol
         return oss.str();
     }
 
+    void OrderCancelRequest::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 11:
+                    setClOrdID(value);
+                    break;
+                case 37:
+                    setOrigClOrdID(value);
+                    break;
+                case 41:
+                    setOrigClOrdID(value);
+                    break;
+                case 39:
+                    setOrdStatus(value[0]);
+                    break;
+                case 434:
+                    setCxlRejResponseTo(std::stoi(value));
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     // Getters and Setters
     const std::string &OrderCancelRequest::getOrderID() const
     {
@@ -556,6 +769,55 @@ namespace FIXProtocol
         oss << formatTrailer(oss.str());
 
         return oss.str();
+    }
+
+    void ExecutionReport::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 37:
+                    setOrderID(value);
+                    break;
+                case 17:
+                    setExecID(value);
+                    break;
+                case 150:
+                    setExecType(value[0]);
+                    break;
+                case 39:
+                    setOrdStatus(value[0]);
+                    break;
+                case 55:
+                    setSymbol(value);
+                    break;
+                case 54:
+                    setSide(value[0]);
+                    break;
+                case 151:
+                    setLeavesQty(std::stoi(value));
+                    break;
+                case 14:
+                    setCumQty(std::stoi(value));
+                    break;
+                case 6:
+                    setAvgPx(std::stod(value));
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
 
     // Getters and Setters
@@ -679,6 +941,34 @@ namespace FIXProtocol
         return oss.str();
     }
 
+    void MarketDataSnapshotFullRefresh::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 268:
+                    setNoMDEntries(std::stoi(value));
+                    break;
+                case 279:
+                    setMDUpdateAction(value[0]);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     // Getters and Setters
     int MarketDataSnapshotFullRefresh::getNoMDEntries() const
     {
@@ -728,6 +1018,34 @@ namespace FIXProtocol
         oss << formatTrailer(oss.str());
 
         return oss.str();
+    }
+
+    void MarketDataIncrementalRefresh::deserialize(const std::string &message)
+    {
+        std::istringstream iss(message);
+        std::string field;
+
+        while (std::getline(iss, field, '^'))
+        {
+            size_t pos = field.find('=');
+            if (pos != std::string::npos)
+            {
+                std::string tag = field.substr(0, pos);
+                std::string value = field.substr(pos + 1);
+
+                switch (std::stoi(tag))
+                {
+                case 55:
+                    setSymbol(value);
+                    break;
+                case 268:
+                    setNoMDEntries(std::stoi(value));
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
 
     // Getters and Setters
