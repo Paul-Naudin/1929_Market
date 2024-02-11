@@ -16,7 +16,7 @@ namespace FIXProtocol
     {
     protected:
         // Header
-        inline static const std::string beginString = "8=FIX.4.2\x01"; // BeginString (8)
+        inline static const std::string beginString = "FIX.4.2"; // BeginString (8)
         int bodyLength;                                                // BodyLength (9)
         std::string msgType;                                           // MsgType (35)
         std::string senderCompID;                                      // SenderCompID (49)

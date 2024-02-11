@@ -31,6 +31,14 @@ namespace FIXProtocol
         return "";
     }
 
+    FIXMessage::FIXMessage()
+    {
+    }
+
+    FIXMessage::~FIXMessage()
+    {
+    }
+
     const std::string &FIXMessage::getBeginString() const
     {
         return beginString;
@@ -153,7 +161,7 @@ namespace FIXProtocol
     // Derived classes
 
     // LOGON
-    Logon::Logon(std::string senderComp, std::string targetComp, int length, std::string encryptMethod = 0, int heartBtInt = 30, std::string username = "", std::string password = "")
+    Logon::Logon(std::string senderComp, std::string targetComp, int length, std::string encryptMethod, int heartBtInt, std::string username, std::string password)
         : heartBtInt(heartBtInt), username(username), password(password)
     {
         msgType = "A";
