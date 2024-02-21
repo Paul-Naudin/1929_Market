@@ -239,9 +239,9 @@ void OrderBook::printOrderBook() const
 }
 
 // Generate a unique id for an order
-std::string OrderBook::generateId()
-{
-    static boost::uuids::random_generator generator;
-    boost::uuids::uuid uuid = generator();
-    return boost::uuids::to_string(uuid);
-}
+// std::string OrderBook::generateId()
+// {
+//     static boost::uuids::random_generator generator;
+//     boost::uuids::uuid uuid = generator();
+//     return boost::uuids::to_string(uuid);
+// }
