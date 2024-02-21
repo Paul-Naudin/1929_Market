@@ -10,19 +10,21 @@
 
 const char SOH = '\x01'; // separator SOH
 
-class FIXMessage
+namespace FIXProtocol
 {
-protected:
-    // Header
-    inline static const std::string beginString = "8=FIX.4.2\x01"; // BeginString (8)
-    int bodyLength;                                                // BodyLength (9)
-    std::string msgType;                                           // MsgType (35)
-    std::string senderCompID;                                      // SenderCompID (49)
-    std::string targetCompID;                                      // TargetCompID (56)
-    int msgSeqNum = 0;                                             // MsgSeqNum (34)
-    std::string sendingTime;                                       // SendingTime (52)
-    // Trailer
-    int checkSum; // CheckSum (10)
+    class FIXMessage
+    {
+    protected:
+        // Header
+        inline static const std::string beginString = "FIX.4.2"; // BeginString (8)
+        int bodyLength;                                                // BodyLength (9)
+        std::string msgType;                                           // MsgType (35)
+        std::string senderCompID;                                      // SenderCompID (49)
+        std::string targetCompID;                                      // TargetCompID (56)
+        int msgSeqNum = 0;                                             // MsgSeqNum (34)
+        std::string sendingTime;                                       // SendingTime (52)
+        // Trailer
+        int checkSum; // CheckSum (10)
 
 public:
     FIXMessage(){};
