@@ -283,6 +283,11 @@ const std::string &Logon::getEncryptMethod() const
     return encryptMethod;
 }
 
+void Logon::setEncryptMethod(const std::string &value)
+{
+    encryptMethod = value;
+}
+
 int Logon::getHeartBtInt() const
 {
     return heartBtInt;
