@@ -10,9 +10,7 @@
 
 const char SOH = '\x01'; // separator SOH
 
-namespace FIXProtocol
-{
-    class FIXMessage
+class FIXMessage
     {
     protected:
         // Header
