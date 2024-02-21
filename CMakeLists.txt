@@ -3,6 +3,7 @@ project(1929_Market)
 
 set(CMAKE_CXX_STANDARD 17)
 
+
 # Set flags for gcov
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 

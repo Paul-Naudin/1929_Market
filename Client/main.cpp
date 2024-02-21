@@ -1,9 +1,21 @@
 #include "GUI/Client.h"
 #include <iostream>
 #include <string>
+#include <QApplication>
+#include <QPushButton>
+#include <QMainWindow>
 
-int main()
+int main(int argc, char *argv[])
 {
+
+    QApplication app(argc, argv);
+
+    QMainWindow window;
+
+    window.show();
+
+    return app.exec();
+
     Client client;
     std::string command;
 
