@@ -170,12 +170,16 @@ void NetworkServer::handleEvent(epoll_event event)
         }
         else
         {
-            FIXMessage message;
+            // MUST ISOLATE THIS PART : GET MSG TYPE AND THEN EXPLOIT INFOS
             const std::string data = std::string(buffer, bytesRead);
             std::cout << "Received data from client with fd " << client_fd << ": " << data << std::endl;
+            std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(data);
 
-            std::string msgType = message.extractMsgType(data);
-            std::cout << "Message type found: " << msgType << std::endl;
+
+            if (message)
+            {
+                std::cout << "Message created" << std::endl;
+            }
         }
     }
 }

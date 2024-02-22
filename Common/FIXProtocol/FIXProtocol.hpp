@@ -7,28 +7,27 @@
 #include <locale>
 #include <codecvt>
 #include <iostream>
+#include <memory>
 
-const char SOH = '\x01'; // separator SOH
-
+const char SOH = '^'; // separator SOH
 class FIXMessage
-    {
-    protected:
-        // Header
-        inline static const std::string beginString = "FIX.4.2"; // BeginString (8)
-        int bodyLength;                                                // BodyLength (9)
-        std::string msgType;                                           // MsgType (35)
-        std::string senderCompID;                                      // SenderCompID (49)
-        std::string targetCompID;                                      // TargetCompID (56)
-        int msgSeqNum = 0;                                             // MsgSeqNum (34)
-        std::string sendingTime;                                       // SendingTime (52)
-        // Trailer
-        int checkSum; // CheckSum (10)
+{
+protected:
+    // Header
+    inline static const std::string beginString = "FIX.4.2"; // BeginString (8)
+    int bodyLength;                                          // BodyLength (9)
+    std::string msgType;                                     // MsgType (35)
+    std::string senderCompID;                                // SenderCompID (49)
+    std::string targetCompID;                                // TargetCompID (56)
+    int msgSeqNum = 0;                                       // MsgSeqNum (34)
+    std::string sendingTime;                                 // SendingTime (52)
+    // Trailer
+    int checkSum; // CheckSum (10)
 
 public:
     FIXMessage(){};
     ~FIXMessage(){};
 
-    std::string extractMsgType(const std::string &message);
     FIXMessage deserialize(const std::string &message);
 
     // Getters and setters
@@ -306,4 +305,63 @@ public:
 
     int getNoMDEntries() const;
     void setNoMDEntries(int value);
+};
+
+class MessageFactory
+{
+public:
+    static std::string extractMsgType(const std::string &message)
+    {
+        std::string type = "";
+        size_t pos = message.find("35=");
+        if (pos != std::string::npos)
+        {
+
+            pos += 3;
+            size_t endPos = message.find_first_of('^', pos);
+            if (endPos != std::string::npos)
+            {
+                type = message.substr(pos, endPos - pos);
+            }
+        }
+
+        return type;
+    }
+
+    static std::unique_ptr<FIXMessage> createMessage(const std::string &message)
+    {
+        std::string msgType = extractMsgType(message);
+        if (msgType == "A")
+        {
+            return std::make_unique<Logon>();
+        }
+        else if (msgType == "D")
+        {
+            return std::make_unique<NewOrder>();
+        }
+        else if (msgType == "G")
+        {
+            return std::make_unique<OrderCancelReplaceRequest>();
+        }
+        else if (msgType == "9")
+        {
+            return std::make_unique<OrderCancelRequest>();
+        }
+        else if (msgType == "8")
+        {
+            return std::make_unique<ExecutionReport>();
+        }
+        else if (msgType == "W")
+        {
+            return std::make_unique<MarketDataSnapshotFullRefresh>();
+        }
+        else if (msgType == "X")
+        {
+            return std::make_unique<MarketDataIncrementalRefresh>();
+        }
+        else
+        {
+            return nullptr; // Ou lancez une exception si nécessaire
+        }
+    }
 };

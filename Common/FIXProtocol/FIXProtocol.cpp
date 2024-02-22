@@ -11,76 +11,8 @@ void splitString(const std::string &input, char delimiter, std::vector<std::stri
     }
 }
 
-std::string FIXMessage::extractMsgType(const std::string &message)
-{
-    std::string type = "";
-    size_t pos = message.find("35=");
-    if (pos != std::string::npos)
-    {
-
-        pos += 3;
-        size_t endPos = message.find_first_of('\x01', pos);
-        if (endPos != std::string::npos)
-        {
-            type = message.substr(pos, endPos - pos);
-        }
-    }
-
-    return type;
-}
-
 FIXMessage FIXMessage::deserialize(const std::string &message)
-{
-    std::string msgType = extractMsgType(message);
-
-    if (msgType == "A")
-    {
-        Logon logon;
-        logon.deserialize(message);
-        return logon;
-    }
-    else if (msgType == "D")
-    {
-        NewOrder newOrder;
-        newOrder.deserialize(message);
-        return newOrder;
-    }
-    else if (msgType == "G")
-    {
-        OrderCancelReplaceRequest cancelReplace;
-        cancelReplace.deserialize(message);
-        return cancelReplace;
-    }
-    else if (msgType == "9")
-    {
-        OrderCancelRequest cancelRequest;
-        cancelRequest.deserialize(message);
-        return cancelRequest;
-    }
-    else if (msgType == "8")
-    {
-        ExecutionReport execReport;
-        execReport.deserialize(message);
-        return execReport;
-    }
-    else if (msgType == "W")
-    {
-        MarketDataSnapshotFullRefresh snapshot;
-        snapshot.deserialize(message);
-        return snapshot;
-    }
-    else if (msgType == "X")
-    {
-        MarketDataIncrementalRefresh incremental;
-        incremental.deserialize(message);
-        return incremental;
-    }
-    else
-    {
-        std::cerr << "Type de message non pris en charge : " << msgType << std::endl;
-        return FIXMessage();
-    }
-}
+{}
 
 const std::string &FIXMessage::getBeginString() const
 {
