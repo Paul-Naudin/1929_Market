@@ -260,9 +260,7 @@ private:
     char mdUpdateAction; // MDUpdateAction (279)
 
 public:
-    MarketDataSnapshotFullRefresh(const std::string &rawData){};
-    MarketDataSnapshotFullRefresh(std::string senderComp, std::string targetComp, int length,
-                                  int noMDEntries, char mdUpdateAction);
+    MarketDataSnapshotFullRefresh(const std::string &rawData);
 
     std::string serialize();
     void deserialize(const std::string &message);
@@ -282,9 +280,7 @@ private:
     int noMDEntries;    // NoMDEntries (268)
 
 public:
-    MarketDataIncrementalRefresh(const std::string &rawData){};
-    MarketDataIncrementalRefresh(std::string senderComp, std::string targetComp, int length,
-                                 std::string symbol, int noMDEntries);
+    MarketDataIncrementalRefresh(const std::string &rawData);
 
     std::string serialize();
     void deserialize(const std::string &message);
