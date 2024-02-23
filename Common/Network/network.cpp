@@ -173,12 +173,15 @@ void NetworkServer::handleEvent(epoll_event event)
             // MUST ISOLATE THIS PART : GET MSG TYPE AND THEN EXPLOIT INFOS
             const std::string data = std::string(buffer, bytesRead);
             std::cout << "Received data from client with fd " << client_fd << ": " << data << std::endl;
-            std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(data);
-
+            std::string messageType = MessageFactory::extractMsgType(data);
+            std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(messageType, data);
 
             if (message)
             {
                 std::cout << "Message created" << std::endl;
+                std::cout << message->getSenderCompID() << std::endl;
+                Logon* test = dynamic_cast<Logon*>(message.get());
+                std::cout <<  test->getUsername() << std::endl;
             }
         }
     }

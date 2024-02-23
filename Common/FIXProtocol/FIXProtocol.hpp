@@ -8,6 +8,7 @@
 #include <codecvt>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 
 const char SOH = '^'; // separator SOH
 class FIXMessage
@@ -26,8 +27,15 @@ protected:
 
 public:
     FIXMessage(){};
+    FIXMessage(const std::string &rawData)
+    {
+        parseRawData(rawData);
+    };
     ~FIXMessage(){};
 
+    virtual void dummy() {};
+
+    void parseRawData(const std::string &rawData);
     FIXMessage deserialize(const std::string &message);
 
     // Getters and setters
@@ -67,9 +75,10 @@ private:
     std::string username;      // Username (553)
     std::string password;      // Password (554)
 
+    void parseRawData(const std::string &rawData);
+
 public:
-    Logon() : encryptMethod("0"), username(""), password("") {}
-    Logon(std::string senderComp, std::string targetComp, int length, std::string encryptMethod = 0, int heartBtInt = 30, std::string username = "", std::string password = "");
+    Logon(const std::string &rawData);
 
     const std::string serialize();
     void deserialize(const std::string &message);
@@ -99,7 +108,7 @@ private:
     char ordType;             // OrdType (40)
 
 public:
-    NewOrder(){};
+    NewOrder(const std::string &rawData){};
     NewOrder(std::string senderComp, std::string targetComp, int length, std::string clOrdID,
              char handlInst,
              std::string symbol,
@@ -142,7 +151,7 @@ private:
     char ordType;             // OrdType (40)
 
 public:
-    OrderCancelReplaceRequest(){};
+    OrderCancelReplaceRequest(const std::string &rawData){};
     OrderCancelReplaceRequest(std::string senderComp, std::string targetComp, int length, std::string origClOrdID, std::string clOrdID,
                               char handlInst,
                               std::string symbol,
@@ -186,7 +195,7 @@ private:
     int cxlRejResponseTo;    // CxlRejResponseTo (434)
 
 public:
-    OrderCancelRequest(){};
+    OrderCancelRequest(const std::string &rawData){};
     OrderCancelRequest(std::string senderComp, std::string targetComp, int length, std::string orderID, std::string origClOrdID, std::string clOrdID,
                        char ordStatus,
                        int cxlRejResponseTo);
@@ -225,7 +234,7 @@ private:
     double avgPx;        // AvgPx (6)
 
 public:
-    ExecutionReport(){};
+    ExecutionReport(const std::string &rawData){};
     ExecutionReport(std::string senderComp, std::string targetComp, int length,
                     std::string orderID, std::string execID, char execType,
                     char ordStatus, std::string symbol, char side,
@@ -270,7 +279,7 @@ private:
     char mdUpdateAction; // MDUpdateAction (279)
 
 public:
-    MarketDataSnapshotFullRefresh(){};
+    MarketDataSnapshotFullRefresh(const std::string &rawData){};
     MarketDataSnapshotFullRefresh(std::string senderComp, std::string targetComp, int length,
                                   int noMDEntries, char mdUpdateAction);
 
@@ -292,7 +301,7 @@ private:
     int noMDEntries;    // NoMDEntries (268)
 
 public:
-    MarketDataIncrementalRefresh(){};
+    MarketDataIncrementalRefresh(const std::string &rawData){};
     MarketDataIncrementalRefresh(std::string senderComp, std::string targetComp, int length,
                                  std::string symbol, int noMDEntries);
 
@@ -310,58 +319,10 @@ public:
 class MessageFactory
 {
 public:
-    static std::string extractMsgType(const std::string &message)
-    {
-        std::string type = "";
-        size_t pos = message.find("35=");
-        if (pos != std::string::npos)
-        {
+    static std::string extractMsgType(const std::string &message);
+    static std::unique_ptr<FIXMessage> createMessage(const std::string &messageType, const std::string &data);
 
-            pos += 3;
-            size_t endPos = message.find_first_of('^', pos);
-            if (endPos != std::string::npos)
-            {
-                type = message.substr(pos, endPos - pos);
-            }
-        }
-
-        return type;
-    }
-
-    static std::unique_ptr<FIXMessage> createMessage(const std::string &message)
-    {
-        std::string msgType = extractMsgType(message);
-        if (msgType == "A")
-        {
-            return std::make_unique<Logon>();
-        }
-        else if (msgType == "D")
-        {
-            return std::make_unique<NewOrder>();
-        }
-        else if (msgType == "G")
-        {
-            return std::make_unique<OrderCancelReplaceRequest>();
-        }
-        else if (msgType == "9")
-        {
-            return std::make_unique<OrderCancelRequest>();
-        }
-        else if (msgType == "8")
-        {
-            return std::make_unique<ExecutionReport>();
-        }
-        else if (msgType == "W")
-        {
-            return std::make_unique<MarketDataSnapshotFullRefresh>();
-        }
-        else if (msgType == "X")
-        {
-            return std::make_unique<MarketDataIncrementalRefresh>();
-        }
-        else
-        {
-            return nullptr; // Ou lancez une exception si nécessaire
-        }
-    }
+private:
+    using MessageFactoryMap = std::unordered_map<std::string, std::unique_ptr<FIXMessage> (*)(const std::string& rawData)>;
+    static MessageFactoryMap messageFactoryMap;
 };

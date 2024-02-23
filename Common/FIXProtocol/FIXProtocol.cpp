@@ -1,18 +1,76 @@
 #include "FIXProtocol.hpp"
 #include <vector>
 
-void splitString(const std::string &input, char delimiter, std::vector<std::string> &result)
-{
-    std::istringstream stream(input);
-    std::string token;
-    while (std::getline(stream, token, delimiter))
-    {
-        result.push_back(token);
+void FIXMessage::parseRawData(const std::string &rawData) {
+        size_t pos = 0;
+
+        pos = rawData.find("9=");
+        if (pos != std::string::npos) {
+            pos += 2;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setBodyLength(std::stoi(rawData.substr(pos, endPos - pos)));
+            }
+        }
+
+        pos = rawData.find("35=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setMsgType(rawData.substr(pos, endPos - pos));
+            }
+        }
+
+        pos = rawData.find("49=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setSenderCompID(rawData.substr(pos, endPos - pos));
+            }
+        }
+
+        pos = rawData.find("56=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setTargetCompID(rawData.substr(pos, endPos - pos));
+            }
+        }
+
+        pos = rawData.find("34=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setMsgSeqNum(std::stoi(rawData.substr(pos, endPos - pos)));
+            }
+        }
+
+        pos = rawData.find("52=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setSendingTime(rawData.substr(pos, endPos - pos));
+            }
+        }
+
+        pos = rawData.find("10=");
+        if (pos != std::string::npos) {
+            pos += 3;
+            size_t endPos = rawData.find('^', pos);
+            if (endPos != std::string::npos) {
+                setCheckSum(rawData.substr(pos, endPos - pos));
+            }
+        }
     }
-}
 
 FIXMessage FIXMessage::deserialize(const std::string &message)
-{}
+{
+}
 
 const std::string &FIXMessage::getBeginString() const
 {
@@ -136,15 +194,58 @@ std::string FIXMessage::formatTrailer(const std::string &message)
 // Derived classes
 
 // LOGON
-Logon::Logon(std::string senderComp, std::string targetComp, int length, std::string encryptMethod, int heartBtInt, std::string username, std::string password)
-    : heartBtInt(heartBtInt), username(username), password(password)
+Logon::Logon(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "A";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    parseRawData(rawData);
+}
+
+void Logon::parseRawData(const std::string &rawData)
+{
+    size_t pos = 0;
+
+    pos = rawData.find("98=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setEncryptMethod(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("108=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setHeartBtInt(std::stoi(rawData.substr(pos, endPos - pos)));
+        }
+    }
+
+    pos = rawData.find("553=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setUsername(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("554=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setPassword(rawData.substr(pos, endPos - pos));
+        }
+    }
 }
 
 const std::string Logon::serialize()
@@ -1002,4 +1103,52 @@ int MarketDataIncrementalRefresh::getNoMDEntries() const
 void MarketDataIncrementalRefresh::setNoMDEntries(int value)
 {
     noMDEntries = value;
+}
+
+// MESSAGE FACTORY
+
+MessageFactory::MessageFactoryMap MessageFactory::messageFactoryMap{
+    {"A", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<Logon>(rawData); }},
+    {"D", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<NewOrder>(rawData); }},
+    {"G", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<OrderCancelReplaceRequest>(rawData); }},
+    {"9", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<OrderCancelRequest>(rawData); }},
+    {"8", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<ExecutionReport>(rawData); }},
+    {"W", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<MarketDataSnapshotFullRefresh>(rawData); }},
+    {"X", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+     { return std::make_unique<MarketDataIncrementalRefresh>(rawData); }},
+};
+
+std::string MessageFactory::extractMsgType(const std::string &message)
+{
+    std::string type = "";
+    size_t pos = message.find("35=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = message.find_first_of('^', pos);
+        if (endPos != std::string::npos)
+        {
+            type = message.substr(pos, endPos - pos);
+        }
+    }
+    return type;
+}
+
+std::unique_ptr<FIXMessage> MessageFactory::createMessage(const std::string &messageType, const std::string &data)
+{
+    auto it = messageFactoryMap.find(messageType);
+    if (it != messageFactoryMap.end())
+    {
+        return (it->second)(data);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
