@@ -1,72 +1,87 @@
 #include "FIXProtocol.hpp"
 #include <vector>
 
-void FIXMessage::parseRawData(const std::string &rawData) {
-        size_t pos = 0;
+void FIXMessage::parseRawData(const std::string &rawData)
+{
+    size_t pos = 0;
 
-        pos = rawData.find("9=");
-        if (pos != std::string::npos) {
-            pos += 2;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setBodyLength(std::stoi(rawData.substr(pos, endPos - pos)));
-            }
-        }
-
-        pos = rawData.find("35=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setMsgType(rawData.substr(pos, endPos - pos));
-            }
-        }
-
-        pos = rawData.find("49=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setSenderCompID(rawData.substr(pos, endPos - pos));
-            }
-        }
-
-        pos = rawData.find("56=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setTargetCompID(rawData.substr(pos, endPos - pos));
-            }
-        }
-
-        pos = rawData.find("34=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setMsgSeqNum(std::stoi(rawData.substr(pos, endPos - pos)));
-            }
-        }
-
-        pos = rawData.find("52=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setSendingTime(rawData.substr(pos, endPos - pos));
-            }
-        }
-
-        pos = rawData.find("10=");
-        if (pos != std::string::npos) {
-            pos += 3;
-            size_t endPos = rawData.find('^', pos);
-            if (endPos != std::string::npos) {
-                setCheckSum(rawData.substr(pos, endPos - pos));
-            }
+    pos = rawData.find("9=");
+    if (pos != std::string::npos)
+    {
+        pos += 2;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setBodyLength(std::stoi(rawData.substr(pos, endPos - pos)));
         }
     }
+
+    pos = rawData.find("35=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setMsgType(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("49=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSenderCompID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("56=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setTargetCompID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("34=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setMsgSeqNum(std::stoi(rawData.substr(pos, endPos - pos)));
+        }
+    }
+
+    pos = rawData.find("52=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSendingTime(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("10=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setCheckSum(rawData.substr(pos, endPos - pos));
+        }
+    }
+}
 
 FIXMessage FIXMessage::deserialize(const std::string &message)
 {
@@ -352,25 +367,61 @@ void Logon::setPassword(const std::string &value)
 }
 
 // NEW ORDER
-NewOrder::NewOrder(std::string senderComp, std::string targetComp, int length, std::string clOrdID,
-                   char handlInst,
-                   std::string symbol,
-                   char side,
-                   std::string transactTime,
-                   char ordType) : clOrdID(clOrdID),
-                                   handlInst(handlInst),
-                                   symbol(symbol),
-                                   side(side),
-                                   transactTime(transactTime),
-                                   ordType(ordType)
-
+NewOrder::NewOrder(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "D";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("11=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setClOrdID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("21=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setHandlInst(rawData[pos]);
+    }
+
+    pos = rawData.find("55=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSymbol(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("54=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setSide(rawData[pos]);
+    }
+
+    pos = rawData.find("60=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setTransactTime(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("40=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setOrdType(rawData[pos]);
+    }
 }
 
 std::string NewOrder::serialize()
@@ -495,19 +546,72 @@ void NewOrder::setOrdType(char value)
 
 // ORDER CANCEL / REPLACE REQUEST
 
-OrderCancelReplaceRequest::OrderCancelReplaceRequest(std::string senderComp, std::string targetComp, int length, std::string origClOrdID, std::string clOrdID,
-                                                     char handlInst,
-                                                     std::string symbol,
-                                                     char side,
-                                                     std::string transactTime,
-                                                     char ordType) : origClOrdID(origClOrdID), clOrdID(clOrdID), handlInst(handlInst), symbol(symbol), side(side), transactTime(transactTime), ordType(ordType)
+OrderCancelReplaceRequest::OrderCancelReplaceRequest(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "G";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("41=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrigClOrdID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("11=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setClOrdID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("21=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setHandlInst(rawData[pos]);
+    }
+
+    pos = rawData.find("55=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSymbol(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("54=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setSide(rawData[pos]);
+    }
+
+    pos = rawData.find("60=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setTransactTime(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("40=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setOrdType(rawData[pos]);
+    }
 }
 
 std::string OrderCancelReplaceRequest::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
@@ -645,15 +749,54 @@ void OrderCancelReplaceRequest::setOrdType(char value)
 }
 
 // ORDER CANCEL REQUEST
-OrderCancelRequest::OrderCancelRequest(std::string senderComp, std::string targetComp, int length, std::string orderID, std::string origClOrdID, std::string clOrdID, char ordStatus, int cxlRejResponseTo)
-    : orderID(orderID), clOrdID(clOrdID), origClOrdID(origClOrdID), ordStatus(ordStatus), cxlRejResponseTo(cxlRejResponseTo)
+OrderCancelRequest::OrderCancelRequest(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "9";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("37=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrderID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("11=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setClOrdID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("41=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrigClOrdID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("39=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setOrdStatus(rawData[pos]);
+    }
+
+    pos = rawData.find("434=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setCxlRejResponseTo(std::stoi(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
 }
 
 std::string OrderCancelRequest::serialize(std::string sendCompID, std::string targetCompID, int bodyLength)
@@ -763,26 +906,82 @@ void OrderCancelRequest::setCxlRejResponseTo(int value)
 }
 
 // EXECUTION REPORT
-ExecutionReport::ExecutionReport(std::string senderComp, std::string targetComp, int length,
-                                 std::string orderID, std::string execID, char execType,
-                                 char ordStatus, std::string symbol, char side,
-                                 int leavesQty, int cumQty, double avgPx)
-    : orderID(orderID),
-      execID(execID),
-      execType(execType),
-      ordStatus(ordStatus),
-      symbol(symbol),
-      side(side),
-      leavesQty(leavesQty),
-      cumQty(cumQty),
-      avgPx(avgPx)
+ExecutionReport::ExecutionReport(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "8";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("37=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrderID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("17=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setExecID(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("150=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setExecType(rawData[pos]);
+    }
+
+    pos = rawData.find("39=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setOrdStatus(rawData[pos]);
+    }
+
+    pos = rawData.find("55=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSymbol(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("54=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setSide(rawData[pos]);
+    }
+
+    pos = rawData.find("151=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setLeavesQty(std::stoi(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
+
+    pos = rawData.find("14=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        setCumQty(std::stoi(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
+
+    pos = rawData.find("6=");
+    if (pos != std::string::npos)
+    {
+        pos += 2;
+        setAvgPx(std::stod(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
 }
 
 std::string ExecutionReport::serialize()
@@ -949,17 +1148,21 @@ void ExecutionReport::setAvgPx(double value)
 
 // MARKET DATA SNAPSHOT FULL REFRESH
 
-MarketDataSnapshotFullRefresh::MarketDataSnapshotFullRefresh(std::string senderComp, std::string targetComp, int length,
-                                                             int noMDEntries, char mdUpdateAction)
-    : noMDEntries(noMDEntries),
-      mdUpdateAction(mdUpdateAction)
+MarketDataSnapshotFullRefresh::MarketDataSnapshotFullRefresh(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "W";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("268=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setNoMDEntries(std::stoi(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
+
+    pos = rawData.find("279=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setMDUpdateAction(rawData[pos]);
+    }
 }
 
 std::string MarketDataSnapshotFullRefresh::serialize()
@@ -1028,17 +1231,25 @@ void MarketDataSnapshotFullRefresh::setMDUpdateAction(char value)
 
 // MARKET DATA INCREMENTAL
 
-MarketDataIncrementalRefresh::MarketDataIncrementalRefresh(std::string senderComp, std::string targetComp, int length,
-                                                           std::string symbol, int noMDEntries)
-    : symbol(symbol),
-      noMDEntries(noMDEntries)
+MarketDataIncrementalRefresh::MarketDataIncrementalRefresh(const std::string &rawData) : FIXMessage(rawData)
 {
-    msgType = "X";
-    senderCompID = senderComp;
-    targetCompID = targetComp;
-    bodyLength = length;
-    setMsgSeqNum();
-    setSendingTime();
+    size_t pos = rawData.find("55=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setSymbol(rawData.substr(pos, endPos - pos));
+        }
+    }
+
+    pos = rawData.find("268=");
+    if (pos != std::string::npos)
+    {
+        pos += 4;
+        setNoMDEntries(std::stoi(rawData.substr(pos, rawData.find('^', pos) - pos)));
+    }
 }
 
 std::string MarketDataIncrementalRefresh::serialize()
@@ -1108,19 +1319,19 @@ void MarketDataIncrementalRefresh::setNoMDEntries(int value)
 // MESSAGE FACTORY
 
 MessageFactory::MessageFactoryMap MessageFactory::messageFactoryMap{
-    {"A", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"A", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<Logon>(rawData); }},
-    {"D", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"D", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<NewOrder>(rawData); }},
-    {"G", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"G", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<OrderCancelReplaceRequest>(rawData); }},
-    {"9", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"9", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<OrderCancelRequest>(rawData); }},
-    {"8", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"8", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<ExecutionReport>(rawData); }},
-    {"W", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"W", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<MarketDataSnapshotFullRefresh>(rawData); }},
-    {"X", [](const std::string& rawData) -> std::unique_ptr<FIXMessage>
+    {"X", [](const std::string &rawData) -> std::unique_ptr<FIXMessage>
      { return std::make_unique<MarketDataIncrementalRefresh>(rawData); }},
 };
 

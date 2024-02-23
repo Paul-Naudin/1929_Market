@@ -108,13 +108,7 @@ private:
     char ordType;             // OrdType (40)
 
 public:
-    NewOrder(const std::string &rawData){};
-    NewOrder(std::string senderComp, std::string targetComp, int length, std::string clOrdID,
-             char handlInst,
-             std::string symbol,
-             char side,
-             std::string transactTime,
-             char ordType);
+    NewOrder(const std::string &rawData);
 
     std::string serialize();
     void deserialize(const std::string &message);
@@ -151,13 +145,7 @@ private:
     char ordType;             // OrdType (40)
 
 public:
-    OrderCancelReplaceRequest(const std::string &rawData){};
-    OrderCancelReplaceRequest(std::string senderComp, std::string targetComp, int length, std::string origClOrdID, std::string clOrdID,
-                              char handlInst,
-                              std::string symbol,
-                              char side,
-                              std::string transactTime,
-                              char ordType);
+    OrderCancelReplaceRequest(const std::string &rawData);
 
     std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
     void deserialize(const std::string &message);
@@ -195,10 +183,7 @@ private:
     int cxlRejResponseTo;    // CxlRejResponseTo (434)
 
 public:
-    OrderCancelRequest(const std::string &rawData){};
-    OrderCancelRequest(std::string senderComp, std::string targetComp, int length, std::string orderID, std::string origClOrdID, std::string clOrdID,
-                       char ordStatus,
-                       int cxlRejResponseTo);
+    OrderCancelRequest(const std::string &rawData);
 
     std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
     void deserialize(const std::string &message);
@@ -234,11 +219,7 @@ private:
     double avgPx;        // AvgPx (6)
 
 public:
-    ExecutionReport(const std::string &rawData){};
-    ExecutionReport(std::string senderComp, std::string targetComp, int length,
-                    std::string orderID, std::string execID, char execType,
-                    char ordStatus, std::string symbol, char side,
-                    int leavesQty, int cumQty, double avgPx);
+    ExecutionReport(const std::string &rawData);
 
     std::string serialize();
     void deserialize(const std::string &message);

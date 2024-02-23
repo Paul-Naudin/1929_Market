@@ -124,6 +124,70 @@ bool NetworkServer::addListeningSocket(int port)
     return true;
 }
 
+void NetworkServer::parseFix(const std::string &rawData)
+{
+    std::string messageType = MessageFactory::extractMsgType(rawData);
+    std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(messageType, rawData);
+
+    if (message)
+    {
+        if (message->getMsgType() == "A")
+        {
+            if (auto logon = dynamic_cast<Logon *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "D")
+        {
+            if (auto newOrder = dynamic_cast<NewOrder *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "G")
+        {
+            if (auto orderCancelReplaceRequest = dynamic_cast<OrderCancelReplaceRequest *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "9")
+        {
+            if (auto orderCancelRequest = dynamic_cast<OrderCancelRequest *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "8")
+        {
+            if (auto executionReport = dynamic_cast<ExecutionReport *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "W")
+        {
+            if (auto marketDataSnapshot = dynamic_cast<MarketDataSnapshotFullRefresh *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else if (message->getMsgType() == "X")
+        {
+            if (auto marketDataIncremental = dynamic_cast<MarketDataIncrementalRefresh *>(message.get()))
+            {
+                // CALL TO BOOKORDER AND UPDATES HERE
+            }
+        }
+        else
+        {
+            std::cout << "Unknown message type." << std::endl;
+            throw std::runtime_error("Unknown message type encountered.");
+        }
+    }
+}
+
 void NetworkServer::handleEvent(epoll_event event)
 {
     // Handle client connection
@@ -170,19 +234,9 @@ void NetworkServer::handleEvent(epoll_event event)
         }
         else
         {
-            // MUST ISOLATE THIS PART : GET MSG TYPE AND THEN EXPLOIT INFOS
             const std::string data = std::string(buffer, bytesRead);
             std::cout << "Received data from client with fd " << client_fd << ": " << data << std::endl;
-            std::string messageType = MessageFactory::extractMsgType(data);
-            std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(messageType, data);
-
-            if (message)
-            {
-                std::cout << "Message created" << std::endl;
-                std::cout << message->getSenderCompID() << std::endl;
-                Logon* test = dynamic_cast<Logon*>(message.get());
-                std::cout <<  test->getUsername() << std::endl;
-            }
+            parseFix(data);
         }
     }
 }

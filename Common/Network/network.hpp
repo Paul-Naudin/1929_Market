@@ -38,6 +38,7 @@ private:
     void addClient(int fd);
     bool addSocket(int fd);
     void removeSocket(int socket_fd);
+    void parseFix(const std::string& rawData);
     void handleEvent(epoll_event event);
 };
 
