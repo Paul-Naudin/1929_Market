@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 #include "../OrderBook/Order.h"
 
-TEST(OrderTests, GettersAndSetters) {
+TEST(OrderTests, GettersAndSetters)
+{
     // Create an Order object
-    Order order("123", 10, 100.0, true);
+    Order order(std::string("123"), "SYMBOL", 10, 100.0, true);
 
     // Test the getters
     EXPECT_EQ(order.getPrice(), 100.0);

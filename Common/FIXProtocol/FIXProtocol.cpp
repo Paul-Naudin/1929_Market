@@ -452,6 +452,28 @@ NewOrder::NewOrder(const std::string &rawData) : FIXMessage(rawData)
         pos += 3;
         setOrdType(rawData[pos]);
     }
+
+    pos = rawData.find("38=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrderQty(std::stoi(rawData.substr(pos, endPos - pos)));
+        }
+    }
+
+    pos = rawData.find("44=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setPrice(std::stod(rawData.substr(pos, endPos - pos)));
+        }
+    }
 }
 
 std::string NewOrder::serialize()

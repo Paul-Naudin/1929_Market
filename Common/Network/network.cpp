@@ -1,5 +1,4 @@
 #include "network.hpp"
-#include "../FIXProtocol/FIXProtocol.hpp"
 
 NetworkServer::NetworkServer() : hbPool(4)
 {
@@ -229,10 +228,10 @@ void NetworkServer::parseFix(const int client_fd, const std::string &rawData)
         {
             if (NewOrder *newOrder = dynamic_cast<NewOrder *>(message.get()))
             {
-                Order order(newOrder->getClOrdID(), newOrder->getSymbol(), newOrder->getOrderQty(), newOrder->getPrice(), newOrder->getSide());
+                Order order(newOrder->getClOrdID(), newOrder->getSymbol(), newOrder->getOrderQty(), newOrder->getPrice(), newOrder->getSide() == '1' ? false : true);
                 OrderBook &orderBook = bookOrdersManager.getOrderBook(newOrder->getSymbol());
                 bookOrdersManager.processNewOrder(order);
-                bookOrdersManager.manageOrderInteraction(orderBook);
+                // bookOrdersManager.manageOrderInteraction(orderBook);
             }
         }
         else if (message->getMsgType() == "G")

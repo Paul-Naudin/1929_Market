@@ -11,6 +11,7 @@ add_library(OrderBookLib
     OrderBook/Order.cpp
 )
 target_include_directories(OrderBookLib PRIVATE OrderBook)
+target_link_libraries(OrderBookLib PRIVATE FIXProtocol)
 
 # Unit tests
 add_subdirectory(tests)

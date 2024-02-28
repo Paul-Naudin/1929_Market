@@ -4,7 +4,7 @@
 #include <list>
 #include <string>
 
-class Order : public IOrder
+class Order
 {
 public:
     Order(std::string id, const std::string &symbol, int quantity, double pricen, bool isBid);
@@ -15,14 +15,14 @@ public:
         return price < other.price;
     }
 
-    int getQuantity() const override;
+    int getQuantity() const;
     const std::string &getSymbol() const;
-    std::string getId() const override;
-    double getPrice() const override;
-    bool getIsBid() const override;
+    std::string getId() const;
+    double getPrice() const;
+    bool getIsBid() const;
 
-    void setQuantity(int newQuantity) override;
-    void setPrice(double newPrice) override;
+    void setQuantity(int newQuantity);
+    void setPrice(double newPrice);
 
 private:
     double price;

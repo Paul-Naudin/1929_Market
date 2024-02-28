@@ -4,13 +4,13 @@
 #include <deque>
 #include <string>
 #include "IOrderBook.h"
-#include "Order.h"
 #include "FIXProtocol.hpp"
 
 class OrderBook
 {
 public:
     OrderBook();
+    ~OrderBook();
 
     std::string addOrder(const std::string &id, const std::string &symbol, double price, int quantity, bool isBid);
     bool removeOrder(const std::string &id);
@@ -45,7 +45,15 @@ public:
         }
 
         OrderBook &orderBook = orderBooks.at(symbol);
-        orderBook.addOrder(order.getId(), order.getSymbol(), order.getPrice(), order.getQuantity(), (order.getIsBid() == '1'));
+        if (order.getIsBid())
+        {
+            orderBook.addOrder(order.getId(), order.getSymbol(), order.getPrice(), order.getQuantity(), true); // Ajouter comme Bid
+        }
+        else
+        {
+            orderBook.addOrder(order.getId(), order.getSymbol(), order.getPrice(), order.getQuantity(), false); // Ajouter comme Ask
+        }
+        orderBook.printOrderBook();
     }
 
     void manageOrderInteraction(OrderBook &orderBook)
@@ -53,20 +61,35 @@ public:
         for (auto it = orderBook.getBids().begin(); it != orderBook.getBids().end(); ++it)
         {
             double price = it->first;
-            int quantity = it->second.front()->getQuantity();
-            orderBook.execute(price, quantity, true);
+            if (!it->second.empty())
+            {
+                int quantity = it->second.front()->getQuantity();
+                orderBook.execute(price, quantity, true);
+            }
         }
 
         for (auto it = orderBook.getAsks().begin(); it != orderBook.getAsks().end(); ++it)
         {
             double price = it->first;
-            int quantity = it->second.front()->getQuantity();
-            orderBook.execute(price, quantity, false);
+            if (!it->second.empty())
+            {
+                int quantity = it->second.front()->getQuantity();
+                orderBook.execute(price, quantity, false);
+            }
         }
     }
 
     OrderBook &getOrderBook(const std::string &symbol)
     {
-        return orderBooks.at(symbol);
+        auto it = orderBooks.find(symbol);
+        if (it != orderBooks.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            orderBooks.emplace(symbol, OrderBook());
+            return orderBooks.at(symbol);
+        }
     }
 };

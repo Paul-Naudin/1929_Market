@@ -115,15 +115,16 @@ bool OrderBook::execute(double price, int quantity, bool isBid)
                 askDeque.pop_front();
                 delete askOrder;
             }
-        }
 
-        if (bidDeque.empty())
-        {
-            bids.erase(price);
-        }
-        if (askDeque.empty())
-        {
-            asks.erase(price);
+            if (bidDeque.empty())
+            {
+                bids.erase(price);
+            }
+
+            if (askDeque.empty())
+            {
+                asks.erase(price);
+            }
         }
 
         return true;
@@ -144,5 +145,24 @@ const std::map<double, std::deque<Order *>, std::greater<double>> &OrderBook::ge
 
 void OrderBook::printOrderBook() const
 {
-    // Implémenter l'affichage du carnet d'ordres ici
+    std::cout << "Liste des ordres dans le carnet d'ordres :" << std::endl;
+    for (const auto &entry : bids)
+    {
+        double price = entry.first;
+        const auto &ordersAtPrice = entry.second;
+        for (const auto &order : ordersAtPrice)
+        {
+            std::cout << "Bid Order - Price: " << price << ", Quantity: " << order->getQuantity() << std::endl;
+        }
+    }
+
+    for (const auto &entry : asks)
+    {
+        double price = entry.first;
+        const auto &ordersAtPrice = entry.second;
+        for (const auto &order : ordersAtPrice)
+        {
+            std::cout << "Ask Order - Price: " << price << ", Quantity: " << order->getQuantity() << std::endl;
+        }
+    }
 }
