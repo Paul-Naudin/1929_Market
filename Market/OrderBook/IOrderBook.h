@@ -5,7 +5,8 @@
 #include <deque>
 #include "Order.h"
 
-class IOrderBook {
+class IOrderBook
+{
 public:
     virtual ~IOrderBook() = default;
 
@@ -15,6 +16,6 @@ public:
 
     virtual bool execute() = 0;
 
-    virtual const std::map<double, std::deque<Order *>, std::greater<double>> getBids() const = 0;
-    virtual const std::map<double, std::deque<Order *>> getAsks() const = 0;
+    virtual const std::map<double, std::deque<Order *>, std::greater<double>> &getBids() const = 0;
+    virtual const std::map<double, std::deque<Order *>, std::greater<double>> &getAsks() const = 0;
 };

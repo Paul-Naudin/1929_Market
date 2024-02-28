@@ -3,7 +3,7 @@
 #include <string>
 
 // Constructor
-Order::Order(std::string id, int quantity, double price, bool isBid) : price(price), quantity(quantity), id(id), isBid(isBid) {}
+Order::Order(std::string id, const std::string& symbol, int quantity, double price, bool isBid) : price(price), symbol(symbol), quantity(quantity), id(id), isBid(isBid) {}
 
 // Destructor
 Order::~Order() {}
@@ -11,6 +11,10 @@ Order::~Order() {}
 // price getter
 double Order::getPrice() const {
     return price;
+}
+
+const std::string& Order::getSymbol() const {
+    return symbol;
 }
 
 // quantity getter

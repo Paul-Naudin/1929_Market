@@ -4,3 +4,4 @@ add_library(Network
 )
 target_include_directories(Network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Network PUBLIC FIXProtocol)
+include_directories(${CMAKE_SOURCE_DIR}/Market/OrderBook)

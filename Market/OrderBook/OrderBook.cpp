@@ -18,24 +18,11 @@ OrderBook::~OrderBook()
     }
 }
 
-// Add an order to the order book
-std::string OrderBook::addOrder(double price, int quantity, bool isBid)
+std::string OrderBook::addOrder(const std::string &id, const std::string &symbol, double price, int quantity, bool isBid)
 {
-    std::string id = generateId();
+    Order *order = new Order(id, symbol, quantity, price, isBid);
+    orders[id] = order;
 
-    // Check if the order already exists in the order book
-    if (orders.find(id) != orders.end())
-    {
-        return nullptr;
-    }
-
-    // Create a new Order object
-    Order *order = new Order(id, quantity, price, isBid);
-
-    // Add the order to the order book
-    orders.emplace(id, order);
-
-    // Add the order to the bids or asks
     if (isBid)
     {
         bids[price].push_back(order);
@@ -48,200 +35,114 @@ std::string OrderBook::addOrder(double price, int quantity, bool isBid)
     return id;
 }
 
-// Remove an order from the order book
-bool OrderBook::removeOrder(std::string id)
+bool OrderBook::removeOrder(const std::string &id)
 {
-    // Find the order in the orders map
     auto it = orders.find(id);
-    if (it == orders.end())
+    if (it != orders.end())
     {
-        return false;
-    }
+        Order *order = it->second;
+        orders.erase(it);
 
-    // Get the pointer to the Order object
-    Order *order = it->second;
-
-    // Remove the order from the bids or asks map
-    if (order->getIsBid())
-    {
-        auto &deque = bids[order->getPrice()];
-        deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
-        if (deque.empty())
+        if (order->getIsBid())
         {
-            bids.erase(order->getPrice());
+            auto &bidDeque = bids[order->getPrice()];
+            bidDeque.erase(std::remove(bidDeque.begin(), bidDeque.end(), order), bidDeque.end());
         }
-    }
-    else
-    {
-        auto &deque = asks[order->getPrice()];
-        deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
-        if (deque.empty())
+        else
         {
-            asks.erase(order->getPrice());
+            auto &askDeque = asks[order->getPrice()];
+            askDeque.erase(std::remove(askDeque.begin(), askDeque.end(), order), askDeque.end());
         }
+
+        delete order;
+        return true;
     }
+    return false;
+}
 
-    // Remove the order from the orders map
-    orders.erase(it);
+bool OrderBook::modifyOrder(const std::string &id, int newQuantity, double newPrice)
+{
+    auto it = orders.find(id);
+    if (it != orders.end())
+    {
+        Order *order = it->second;
+        order->setQuantity(newQuantity);
 
-    // Delete the Order object
-    delete order;
+        if (order->getIsBid())
+        {
+            auto &bidDeque = bids[order->getPrice()];
+            bidDeque.erase(std::remove(bidDeque.begin(), bidDeque.end(), order), bidDeque.end());
+            order->setPrice(newPrice);
+            bids[newPrice].push_back(order);
+        }
+        else
+        {
+            auto &askDeque = asks[order->getPrice()];
+            askDeque.erase(std::remove(askDeque.begin(), askDeque.end(), order), askDeque.end());
+            order->setPrice(newPrice);
+            asks[newPrice].push_back(order);
+        }
+
+        return true;
+    }
+    return false;
+}
+
+bool OrderBook::execute(double price, int quantity, bool isBid)
+{
+    if (bids.find(price) != bids.end() && asks.find(price) != asks.end())
+    {
+        auto &bidDeque = bids[price];
+        auto &askDeque = asks[price];
+
+        while (!bidDeque.empty() && !askDeque.empty() && quantity > 0)
+        {
+            Order *bidOrder = bidDeque.front();
+            Order *askOrder = askDeque.front();
+
+            int executionQuantity = std::min(bidOrder->getQuantity(), askOrder->getQuantity());
+            bidOrder->setQuantity(bidOrder->getQuantity() - executionQuantity);
+            askOrder->setQuantity(askOrder->getQuantity() - executionQuantity);
+            quantity -= executionQuantity;
+
+            if (bidOrder->getQuantity() == 0)
+            {
+                bidDeque.pop_front();
+                delete bidOrder;
+            }
+            if (askOrder->getQuantity() == 0)
+            {
+                askDeque.pop_front();
+                delete askOrder;
+            }
+        }
+
+        if (bidDeque.empty())
+        {
+            bids.erase(price);
+        }
+        if (askDeque.empty())
+        {
+            asks.erase(price);
+        }
+
+        return true;
+    }
 
     return false;
 }
 
-// Modify an order in the order book
-bool OrderBook::modifyOrder(std::string id, int newQuantity, int newPrice)
+const std::map<double, std::deque<Order *>, std::greater<double>> &OrderBook::getBids() const
 {
-    // Find the order in the orders map
-    auto it = orders.find(id);
-
-    // Check if the order exists
-    if (it == orders.end())
-    {
-        return false;
-    }
-
-    // Get the pointer to the Order object
-    Order *order = it->second;
-
-    // Remove the order from the bids or asks map
-    if (order->getIsBid())
-    {
-        auto &deque = bids[order->getPrice()];
-        deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
-        if (deque.empty())
-        {
-            bids.erase(order->getPrice());
-        }
-    }
-    else
-    {
-        auto &deque = asks[order->getPrice()];
-        deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
-        if (deque.empty())
-        {
-            asks.erase(order->getPrice());
-        }
-    }
-
-    // Modify the order
-    order->setPrice(newPrice);
-    order->setQuantity(newQuantity);
-
-    // Add the order to the bids or asks map
-    if (order->getIsBid())
-    {
-        bids[order->getPrice()].push_back(order);
-    }
-    else
-    {
-        asks[order->getPrice()].push_back(order);
-    }
-
-    return false;
+    return bids;
 }
 
-// Execute an order
-bool OrderBook::execute()
+const std::map<double, std::deque<Order *>, std::greater<double>> &OrderBook::getAsks() const
 {
-    // Check if there are any bids or asks
-    if (bids.empty() || asks.empty())
-    {
-        return false;
-    }
-
-    // Get the best bid and ask
-    auto bestBid = bids.begin();
-    auto bestAsk = asks.begin();
-
-    // Continue matching orders until no more matches can be made
-    while (bestBid->first >= bestAsk->first)
-    {
-        // Get the best bid and ask orders
-        Order *bestBidOrder = bestBid->second.front();
-        Order *bestAskOrder = bestAsk->second.front();
-
-        // Check if the best bid quantity is greater than the best ask quantity
-        if (bestBidOrder->getQuantity() > bestAskOrder->getQuantity())
-        {
-            // Modify the best bid order
-            bestBidOrder->setQuantity(bestBidOrder->getQuantity() - bestAskOrder->getQuantity());
-            // Remove the best ask order
-            removeOrder(bestAskOrder->getId());
-        }
-        else if (bestBidOrder->getQuantity() < bestAskOrder->getQuantity())
-        {
-            // Modify the best ask order
-            bestAskOrder->setQuantity(bestAskOrder->getQuantity() - bestBidOrder->getQuantity());
-            // Remove the best bid order
-            removeOrder(bestBidOrder->getId());
-        }
-        else
-        {
-            // Remove the best bid and ask orders
-            removeOrder(bestBidOrder->getId());
-            removeOrder(bestAskOrder->getId());
-        }
-
-        // Update the best bid and ask
-        if (!bids.empty())
-        {
-            bestBid = bids.begin();
-        }
-        if (!asks.empty())
-        {
-            bestAsk = asks.begin();
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    return true;
+    return asks;
 }
 
-// Get the bids from the order book
-const std::map<double, std::deque<Order *>, std::greater<double>> OrderBook::getBids() const
-{
-    return this->bids;
-}
-
-// Get the asks from the order book
-const std::map<double, std::deque<Order *>> OrderBook::getAsks() const
-{
-    return this->asks;
-}
-
-// Print the order book
 void OrderBook::printOrderBook() const
 {
-    std::cout << "----------------------------------------" << std::endl;
-    std::cout << "Bids:" << std::endl;
-    for (const auto &bid : bids)
-    {
-        std::cout << bid.first << std::endl;
-        for (const auto &order : bid.second)
-        {
-            std::cout << "\t" << order->getId() << "\t" << order->getQuantity() << "\t" << std::endl;
-        }
-    }
-    std::cout << "Asks:" << std::endl;
-    for (const auto &ask : asks)
-    {
-        std::cout << ask.first << std::endl;
-        for (const auto &order : ask.second)
-        {
-            std::cout << "\t" << order->getId() << "\t" << order->getQuantity() << "\t" << std::endl;
-        }
-    }
+    // Implémenter l'affichage du carnet d'ordres ici
 }
-
-// Generate a unique id for an order
-// std::string OrderBook::generateId()
-// {
-//     static boost::uuids::random_generator generator;
-//     boost::uuids::uuid uuid = generator();
-//     return boost::uuids::to_string(uuid);
-// }
