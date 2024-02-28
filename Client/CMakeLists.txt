@@ -15,3 +15,6 @@ add_library(CommandLine
     GUI/Client.cpp
 )
 target_link_libraries(CommandLine PRIVATE FIXProtocol)
+
+# MVC library
+add_subdirectory(MVC)
