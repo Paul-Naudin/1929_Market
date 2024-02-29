@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include "../OrderBook/Order.h"
 
-TEST(OrderTests, GettersAndSetters) {
+TEST(OrderTests, GettersAndSetters)
+{
     // Create an Order object
     Order order("123", 10, 100.0, OrderType::BID);
 

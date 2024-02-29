@@ -1,7 +1,6 @@
 #include "network.hpp"
-#include "../FIXProtocol/FIXProtocol.hpp"
 
-NetworkServer::NetworkServer()
+NetworkServer::NetworkServer() : hbPool(4)
 {
     epoll_fd_ = -1;
     listening_fd_ = -1;
@@ -124,7 +123,74 @@ bool NetworkServer::addListeningSocket(int port)
     return true;
 }
 
-void NetworkServer::parseFix(const std::string &rawData)
+bool NetworkServer::authenticateClient(const std::string &username, const std::string &password)
+{
+    // const std::string credentialsFile = "credentials.txt";
+
+    // std::ifstream file(credentialsFile);
+    // if (!file.is_open())
+    // {
+    //     std::cerr << "Erreur : Impossible d'ouvrir le fichier des informations d'identification." << std::endl;
+    //     return false;
+    // }
+
+    // std::unordered_map<std::string, std::string> credentials;
+    // std::string line;
+    // while (std::getline(file, line))
+    // {
+    //     std::istringstream iss(line);
+    //     std::string user, pass;
+    //     if (!(iss >> user >> pass))
+    //     {
+    //         std::cerr << "Erreur : Format de fichier invalide." << std::endl;
+    //         return false;
+    //     }
+    //     credentials[user] = pass;
+    // }
+
+    // file.close();
+
+    // auto it = credentials.find(username);
+    // if (it != credentials.end() && it->second == password)
+    // {
+    //     return true;
+    // }
+    // else
+    // {
+    //     return false;
+    // }
+    return true;
+}
+
+void NetworkServer::rejectConnection(int client_fd, FIXMessage &message)
+{
+    FIXMessage logoutMessage;
+    logoutMessage.setMsgType("5");
+    logoutMessage.setSenderCompID(message.getSenderCompID());
+    logoutMessage.setTargetCompID(message.getTargetCompID());
+    logoutMessage.setSendingTime();
+
+    std::string rejectionMessage = logoutMessage.serialize();
+    send(client_fd, rejectionMessage.c_str(), rejectionMessage.length(), 0);
+}
+
+void NetworkServer::handleHeartbeat(ClientInfo &client, FIXMessage &message)
+{
+    while (client.isLogged)
+    {
+        std::unique_lock<std::mutex> lock(*client.mtx);
+        if (client.cv->wait_for(lock, std::chrono::seconds(client.heartbeatInterval)) == std::cv_status::timeout)
+        {
+            std::cout << "Sending Test Request to client: " << client.fd << std::endl;
+            message.setSendingTime();
+            message.setBodyLength();
+            send(client.fd, message.sendHeartbeat().c_str(), message.sendHeartbeat().length(), 0);
+            client.lastReceivedTime = std::chrono::steady_clock::now();
+        }
+    }
+}
+
+void NetworkServer::parseFix(const int client_fd, const std::string &rawData)
 {
     std::string messageType = MessageFactory::extractMsgType(rawData);
     std::unique_ptr<FIXMessage> message = MessageFactory::createMessage(messageType, rawData);
@@ -133,16 +199,38 @@ void NetworkServer::parseFix(const std::string &rawData)
     {
         if (message->getMsgType() == "A")
         {
-            if (auto logon = dynamic_cast<Logon *>(message.get()))
+            if (Logon *logon = dynamic_cast<Logon *>(message.get()))
             {
-                // CALL TO BOOKORDER AND UPDATES HERE
+                if (authenticateClient(logon->getUsername(), logon->getPassword()))
+                {
+                    for (auto &client : clients_)
+                    {
+                        if (client.fd == client_fd)
+                        {
+                            client.isLogged = true;
+                            client.username = logon->getUsername();
+                            client.heartbeatInterval = logon->getHeartBtInt();
+                            hbPool.enqueue([this, &client, logon]()
+                                           { handleHeartbeat(client, *logon); });
+                            break;
+                        }
+                    }
+                    std::string confirmationResponse = logon->serialize(true);
+                    send(client_fd, confirmationResponse.c_str(), confirmationResponse.length(), 0);
+                }
+                else
+                {
+                    rejectConnection(client_fd, *logon);
+                }
             }
         }
         else if (message->getMsgType() == "D")
         {
-            if (auto newOrder = dynamic_cast<NewOrder *>(message.get()))
+            if (NewOrder *newOrder = dynamic_cast<NewOrder *>(message.get()))
             {
-                // CALL TO BOOKORDER AND UPDATES HERE
+                OrderBook &orderBook = bookOrdersManager.getOrderBook(newOrder->getSymbol());
+                orderBook.addOrder(newOrder->getPrice(), newOrder->getOrderQty(), newOrder->getSide() == '1' ? OrderType::ASK : OrderType::BID);
+                // bookOrdersManager.manageOrderInteraction(orderBook);
             }
         }
         else if (message->getMsgType() == "G")
@@ -236,7 +324,7 @@ void NetworkServer::handleEvent(epoll_event event)
         {
             const std::string data = std::string(buffer, bytesRead);
             std::cout << "Received data from client with fd " << client_fd << ": " << data << std::endl;
-            parseFix(data);
+            parseFix(client_fd, data);
         }
     }
 }

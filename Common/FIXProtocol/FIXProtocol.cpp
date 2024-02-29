@@ -97,9 +97,22 @@ int FIXMessage::getBodyLength() const
     return bodyLength;
 }
 
-void FIXMessage::setBodyLength(int length)
+void FIXMessage::setBodyLength(int lenght)
 {
-    bodyLength = length;
+    bodyLength = lenght;
+}
+
+void FIXMessage::setBodyLength()
+{
+    int totalLength = 0;
+
+    totalLength += msgType.length() + 1;
+    totalLength += senderCompID.length() + 1;
+    totalLength += targetCompID.length() + 1;
+    totalLength += std::to_string(msgSeqNum).length() + 1;
+    totalLength += sendingTime.length() + 1;
+
+    bodyLength = totalLength;
 }
 
 const std::string &FIXMessage::getMsgType() const
@@ -206,6 +219,23 @@ std::string FIXMessage::formatTrailer(const std::string &message)
     return oss.str();
 }
 
+std::string FIXMessage::serialize()
+{
+    std::string header = formatHeader();
+
+    std::string trailer = formatTrailer("");
+
+    setBodyLength();
+
+    std::string strBodyLength = std::to_string(bodyLength);
+
+    header.replace(header.find("9=") + 2, 1, strBodyLength);
+
+    std::string message = header + trailer;
+
+    return message;
+}
+
 // Derived classes
 
 // LOGON
@@ -263,7 +293,7 @@ void Logon::parseRawData(const std::string &rawData)
     }
 }
 
-const std::string Logon::serialize()
+const std::string Logon::serialize(bool isServer)
 {
     std::ostringstream oss;
 
@@ -274,10 +304,10 @@ const std::string Logon::serialize()
     oss << "98=" << encryptMethod << SOH
         << "108=" << heartBtInt << SOH;
 
-    if (username != "")
+    if (!isServer && username != "")
         oss << "553=" << username << SOH;
 
-    if (password != "")
+    if (!isServer && password != "")
         oss << "554=" << password << SOH;
 
     // Trailer
@@ -422,6 +452,28 @@ NewOrder::NewOrder(const std::string &rawData) : FIXMessage(rawData)
         pos += 3;
         setOrdType(rawData[pos]);
     }
+
+    pos = rawData.find("38=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setOrderQty(std::stoi(rawData.substr(pos, endPos - pos)));
+        }
+    }
+
+    pos = rawData.find("44=");
+    if (pos != std::string::npos)
+    {
+        pos += 3;
+        size_t endPos = rawData.find('^', pos);
+        if (endPos != std::string::npos)
+        {
+            setPrice(std::stod(rawData.substr(pos, endPos - pos)));
+        }
+    }
 }
 
 std::string NewOrder::serialize()
@@ -436,7 +488,9 @@ std::string NewOrder::serialize()
         << "55=" << symbol << SOH
         << "54=" << side << SOH
         << "60=" << transactTime << SOH
-        << "40=" << ordType << SOH;
+        << "40=" << ordType << SOH
+        << "38=" << orderQty << SOH
+        << "44=" << price << SOH;
 
     oss << formatTrailer(oss.str());
 
@@ -475,6 +529,12 @@ void NewOrder::deserialize(const std::string &message)
                 break;
             case 40:
                 setOrdType(value[0]);
+                break;
+            case 38:
+                setOrderQty(std::stoi(value));
+                break;
+            case 44:
+                setPrice(std::stoi(value));
                 break;
             default:
                 break;
@@ -542,6 +602,26 @@ char NewOrder::getOrdType() const
 void NewOrder::setOrdType(char value)
 {
     ordType = value;
+}
+
+int NewOrder::getOrderQty() const
+{
+    return orderQty;
+}
+
+void NewOrder::setOrderQty(int value)
+{
+    orderQty = value;
+}
+
+double NewOrder::getPrice() const
+{
+    return price;
+}
+
+void NewOrder::setPrice(double value)
+{
+    price = value;
 }
 
 // ORDER CANCEL / REPLACE REQUEST

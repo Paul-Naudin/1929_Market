@@ -33,16 +33,18 @@ public:
     };
     ~FIXMessage(){};
 
-    virtual void dummy() {};
+    virtual void dummy(){};
 
     void parseRawData(const std::string &rawData);
+    std::string serialize();
     FIXMessage deserialize(const std::string &message);
 
     // Getters and setters
     const std::string &getBeginString() const;
 
     int getBodyLength() const;
-    void setBodyLength(int length);
+    void setBodyLength();
+    void setBodyLength(int lenght);
 
     const std::string &getMsgType() const;
     void setMsgType(const std::string &value);
@@ -65,6 +67,12 @@ public:
 
     std::string formatHeader() const;
     std::string formatTrailer(const std::string &message);
+
+    std::string sendHeartbeat()
+    {
+        std::string heartbeat = formatHeader() + formatTrailer("") + '\x10';
+        return heartbeat;
+    }
 };
 
 class Logon : public FIXMessage
@@ -80,7 +88,7 @@ private:
 public:
     Logon(const std::string &rawData);
 
-    const std::string serialize();
+    const std::string serialize(bool isServer);
     void deserialize(const std::string &message);
 
     // Getter and Setter
@@ -106,6 +114,8 @@ private:
     char side;                // Side (54)
     std::string transactTime; // TransactTime (60)
     char ordType;             // OrdType (40)
+    int orderQty;             // OrderQty (38)
+    double price;             // Price (44)
 
 public:
     NewOrder(const std::string &rawData);
@@ -131,6 +141,12 @@ public:
 
     char getOrdType() const;
     void setOrdType(char value);
+
+    int getOrderQty() const;
+    void setOrderQty(int value);
+    
+    double getPrice() const;
+    void setPrice(double value);
 };
 
 class OrderCancelReplaceRequest : public FIXMessage
@@ -300,6 +316,6 @@ public:
     static std::unique_ptr<FIXMessage> createMessage(const std::string &messageType, const std::string &data);
 
 private:
-    using MessageFactoryMap = std::unordered_map<std::string, std::unique_ptr<FIXMessage> (*)(const std::string& rawData)>;
+    using MessageFactoryMap = std::unordered_map<std::string, std::unique_ptr<FIXMessage> (*)(const std::string &rawData)>;
     static MessageFactoryMap messageFactoryMap;
 };

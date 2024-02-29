@@ -3,7 +3,6 @@ add_subdirectory(OrderBook)
 
 # Market executable
 add_executable(Market
-    Exchange.cpp
     main.cpp
 )
 target_include_directories(Market PRIVATE OrderBook)
