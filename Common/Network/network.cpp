@@ -230,7 +230,7 @@ void NetworkServer::parseFix(const int client_fd, const std::string &rawData)
             {
                 OrderBook &orderBook = bookOrdersManager.getOrderBook(newOrder->getSymbol());
                 orderBook.addOrder(newOrder->getPrice(), newOrder->getOrderQty(), newOrder->getSide() == '1' ? OrderType::ASK : OrderType::BID);
-                // bookOrdersManager.manageOrderInteraction(orderBook);
+                orderBook.execute();
             }
         }
         else if (message->getMsgType() == "G")
