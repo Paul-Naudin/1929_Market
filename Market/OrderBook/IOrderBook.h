@@ -9,7 +9,7 @@ class IOrderBook {
 public:
     virtual ~IOrderBook() = default;
 
-    virtual std::string addOrder(double price, int quantity, bool isBid) = 0;
+    virtual std::string addOrder(double price, int quantity, OrderType type) = 0;
     virtual bool removeOrder(std::string id) = 0;
     virtual bool modifyOrder(std::string id, int newQuantity, int newPrice) = 0;
 

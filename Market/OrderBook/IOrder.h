@@ -2,6 +2,11 @@
 
 #include <string>
 
+enum class OrderType {
+    BID,
+    ASK
+};
+
 class IOrder {
 public:
     virtual ~IOrder() = default;
@@ -9,7 +14,7 @@ public:
     virtual int getQuantity() const = 0;
     virtual std::string getId() const = 0;
     virtual double getPrice() const = 0;
-    virtual bool getIsBid() const = 0;
+    virtual OrderType getOrderType() const = 0;
 
     virtual void setQuantity(int newQuantity) = 0;
     virtual void setPrice(double newPrice) = 0;

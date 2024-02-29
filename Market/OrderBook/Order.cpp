@@ -3,37 +3,37 @@
 #include <string>
 
 // Constructor
-Order::Order(std::string id, int quantity, double price, bool isBid) : price(price), quantity(quantity), id(id), isBid(isBid) {}
+Order::Order(std::string id, int quantity, double price, OrderType type) : m_price(price), m_quantity(quantity), m_id(id), m_type(type) {}
 
 // Destructor
 Order::~Order() {}
 
 // price getter
 double Order::getPrice() const {
-    return price;
+    return m_price;
 }
 
 // quantity getter
 int Order::getQuantity() const {
-    return quantity;
+    return m_quantity;
 }
 
 // id getter
 std::string Order::getId() const {
-    return id;
+    return m_id;
 }
 
-// isBid getter
-bool Order::getIsBid() const {
-    return isBid;
+// OrderType getter
+OrderType Order::getOrderType() const {
+    return m_type;
 }
 
 // price setter
 void Order::setPrice(double newPrice) {
-    price = newPrice;
+    m_price = newPrice;
 }
 
 // quantity setter
 void Order::setQuantity(int newQuantity) {
-    quantity = newQuantity;
+    m_quantity = newQuantity;
 }
