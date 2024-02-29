@@ -8,7 +8,7 @@
 class Order : public IOrder {
 public:
 
-    Order(std::string id, int quantity, double pricen, OrderType type);
+    Order(const std::string &id, int quantity, double pricen, OrderType type);
     ~Order();
 
     inline bool operator<(const Order& other) const {
@@ -16,7 +16,7 @@ public:
     }
 
     int getQuantity() const override;
-    std::string getId() const override;
+    const std::string& getId() const override;
     double getPrice() const override;
     OrderType getOrderType() const override;
 

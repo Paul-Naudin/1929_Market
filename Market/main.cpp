@@ -24,8 +24,8 @@ int main() {
 
     usdEur.printOrderBook();
 
-    usdEur.addOrder(1, 100, OrderType::BID);
-    usdEur.addOrder(1, 50, OrderType::ASK);
+    std::string id1 = usdEur.addOrder(1, 100, OrderType::BID);
+    std::string id2 = usdEur.addOrder(1, 50, OrderType::ASK);
     usdEur.addOrder(2, 100, OrderType::BID);
 
     usdEur.printOrderBook();
@@ -33,6 +33,19 @@ int main() {
     usdEur.execute();
 
     usdEur.printOrderBook();
+
+    std::cout << id1 << usdEur.removeOrder(id1) << std::endl;
+    std::cout << id2 << usdEur.removeOrder(id2) << std::endl;
+
+    std::cout << usdEur.modifyOrder(id1, 1, 100) << std::endl;
+
+    usdEur.printOrderBook();
+
+    usdEur.execute();
+    usdEur.execute();
+    usdEur.execute();
+    usdEur.execute();
+    usdEur.execute();
 
     return 0;
 }

@@ -14,9 +14,9 @@ public:
     OrderBook();
     ~OrderBook();
 
-    std::string addOrder(double price, int quantity, OrderType type) override;
-    bool removeOrder(std::string id) override;
-    bool modifyOrder(std::string id, int newQuantity, int newPrice) override;
+    const std::string addOrder(double price, int quantity, OrderType type) override;
+    bool removeOrder(const std::string &id) override;
+    bool modifyOrder(const std::string &id, int newQuantity, int newPrice) override;
 
     bool execute();
 

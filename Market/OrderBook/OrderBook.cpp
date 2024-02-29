@@ -20,7 +20,7 @@ OrderBook::~OrderBook()
 }
 
 // Add an order to the order book
-std::string OrderBook::addOrder(double price, int quantity, OrderType type)
+const std::string OrderBook::addOrder(double price, int quantity, OrderType type)
 {
     std::string id = generateId();
 
@@ -45,7 +45,7 @@ std::string OrderBook::addOrder(double price, int quantity, OrderType type)
 }
 
 // Remove an order from the order book
-bool OrderBook::removeOrder(std::string id)
+bool OrderBook::removeOrder(const std::string &id)
 {
     // Find the order in the orders map
     auto it = orders.find(id);
@@ -81,7 +81,7 @@ bool OrderBook::removeOrder(std::string id)
 }
 
 // Modify an order in the order book
-bool OrderBook::modifyOrder(std::string id, int newQuantity, int newPrice)
+bool OrderBook::modifyOrder(const std::string &id, int newQuantity, int newPrice)
 {
     // Find the order in the orders map
     auto it = orders.find(id);
