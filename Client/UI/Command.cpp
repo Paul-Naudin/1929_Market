@@ -9,7 +9,8 @@ void HelpCommand::execute() {
     std::cout << "\t" << "help" << "\t\t" << "Displays this help message" << std::endl;
     std::cout << "\t" << "exit," << "\t" << "quit" << "\t" << "Exits the program" << std::endl;
     std::cout << "\t" << "Logon" << "\t\t" << "Establish connection to remote market." << std::endl;
-    std::cout << "\t" << "Logout" << "\t\t" << "Close connection to remote market." << std::endl;
+    std::cout << "\t" << "NewOrder" << "\t" << "Send a new order to the market." << std::endl;
+    std::cout << "\t" << "CancelOrder" << "\t" << "Cancel an existing order." << std::endl;
 }
 
 // Logon command
@@ -55,7 +56,7 @@ NewOrderCommand::NewOrderCommand(const std::string args) {
 }
 
 void NewOrderCommand::execute() {
-    if (this->symbol.length() <= 0 || this->side < '0' || this->side > '1' || this->quantity <= 0 || this->price <= 0) {
+    if (this->symbol.length() <= 0 || this->side < '1' || this->side > '2' || this->quantity <= 0 || this->price <= 0) {
         std::cout << "Usage: NewOrder <symbol> <side> <quantity> <price>" << std::endl;
         return;
     }
