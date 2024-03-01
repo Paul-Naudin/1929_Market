@@ -7,267 +7,315 @@
 #include <locale>
 #include <codecvt>
 #include <iostream>
+#include <memory>
+#include <unordered_map>
 
-const char SOH = '\x01'; // séparateur SOH
-
-namespace FIXProtocol
+const char SOH = '^'; // separator SOH
+class FIXMessage
 {
-    class FIXMessage
+protected:
+    // Header
+    inline static const std::string beginString = "FIX.4.2"; // BeginString (8)
+    int bodyLength;                                          // BodyLength (9)
+    std::string msgType;                                     // MsgType (35)
+    std::string senderCompID;                                // SenderCompID (49)
+    std::string targetCompID;                                // TargetCompID (56)
+    int msgSeqNum = 0;                                       // MsgSeqNum (34)
+    std::string sendingTime;                                 // SendingTime (52)
+    // Trailer
+    int checkSum; // CheckSum (10)
+
+public:
+    FIXMessage(){};
+    FIXMessage(const std::string &rawData)
     {
-    private:
-        // Header
-        inline static const std::string beginString = "8=FIX.4.2\x01"; // BeginString (8)
-        int bodyLength;                                                // BodyLength (9)
-        std::string msgType;                                           // MsgType (35)
-        std::string senderCompID;                                      // SenderCompID (49)
-        std::string targetCompID;                                      // TargetCompID (56)
-        int msgSeqNum = 0;                                             // MsgSeqNum (34)
-        std::string sendingTime;                                       // SendingTime (52)
-        // Trailer
-        int checkSum; // CheckSum (10)
-
-    public:
-        FIXMessage();
-        ~FIXMessage();
-
-        // Getters et setters
-        const std::string &getBeginString() const;
-
-        int getBodyLength() const;
-        void setBodyLength(int length);
-
-        const std::string &getMsgType() const;
-        void setMsgType(const std::string &value);
-
-        const std::string &getSenderCompID() const;
-        void setSenderCompID(const std::string &value);
-
-        const std::string &getTargetCompID() const;
-        void setTargetCompID(const std::string &value);
-
-        int getMsgSeqNum() const;
-        void setMsgSeqNum(int value = 1);
-
-        const std::string &getSendingTime() const;
-        void setSendingTime();
-        void setSendingTime(std::string value);
-
-        int getCheckSum() const;
-        void setCheckSum(const std::string &message);
+        parseRawData(rawData);
     };
+    ~FIXMessage(){};
 
-    class LogonMessage : public FIXMessage
+    virtual void dummy(){};
+
+    void parseRawData(const std::string &rawData);
+    std::string serialize();
+    FIXMessage deserialize(const std::string &message);
+
+    // Getters and setters
+    const std::string &getBeginString() const;
+
+    int getBodyLength() const;
+    void setBodyLength();
+    void setBodyLength(int lenght);
+
+    const std::string &getMsgType() const;
+    void setMsgType(const std::string &value);
+
+    const std::string &getSenderCompID() const;
+    void setSenderCompID(const std::string &value);
+
+    const std::string &getTargetCompID() const;
+    void setTargetCompID(const std::string &value);
+
+    int getMsgSeqNum() const;
+    void setMsgSeqNum(int value = 1);
+
+    const std::string &getSendingTime() const;
+    void setSendingTime();
+    void setSendingTime(std::string value);
+
+    int getCheckSum() const;
+    void setCheckSum(const std::string &message);
+
+    std::string formatHeader() const;
+    std::string formatTrailer(const std::string &message);
+
+    std::string sendHeartbeat()
     {
-    private:
-        std::string encryptMethod; // EncryptMethod (98)
-        int heartBtInt;            // HeartBtInt (108)
-        std::string username;      // Username (553)
-        std::string password;      // Password (554)
+        std::string heartbeat = formatHeader() + formatTrailer("") + '\x10';
+        return heartbeat;
+    }
+};
 
-    public:
-        LogonMessage() : encryptMethod("0") {}
+class Logon : public FIXMessage
+{
+private:
+    std::string encryptMethod; // EncryptMethod (98)
+    int heartBtInt;            // HeartBtInt (108)
+    std::string username;      // Username (553)
+    std::string password;      // Password (554)
 
-        void parseField(const std::string &field);
+    void parseRawData(const std::string &rawData);
 
-        const std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength, 
-                              std::string user, std::string password, int heartBtInt = 30);
-        void deserialize(const std::string &data);
+public:
+    Logon(const std::string &rawData);
 
-        // Getter et Setter
-        const std::string &getEncryptMethod() const;
-        void setEncryptMethod(const std::string &value);
+    const std::string serialize(bool isServer);
+    void deserialize(const std::string &message);
 
-        int getHeartBtInt() const;
-        void setHeartBtInt(int value);
+    // Getter and Setter
+    const std::string &getEncryptMethod() const;
+    void setEncryptMethod(const std::string &value);
 
-        const std::string &getUsername() const;
-        void setUsername(const std::string &value);
+    int getHeartBtInt() const;
+    void setHeartBtInt(int value);
 
-        const std::string &getPassword() const;
-        void setPassword(const std::string &value);
-    };
+    const std::string &getUsername() const;
+    void setUsername(const std::string &value);
 
-    class NewOrderMessage : public FIXMessage
-    {
-    private:
-        std::string clOrdID;      // ClOrdID (11)
-        char handlInst;           // HandlInst (21)
-        std::string symbol;       // Symbol (55)
-        char side;                // Side (54)
-        std::string transactTime; // TransactTime (60)
-        char ordType;             // OrdType (40)
+    const std::string &getPassword() const;
+    void setPassword(const std::string &value);
+};
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+class NewOrder : public FIXMessage
+{
+private:
+    std::string clOrdID;      // ClOrdID (11)
+    char handlInst;           // HandlInst (21)
+    std::string symbol;       // Symbol (55)
+    char side;                // Side (54)
+    std::string transactTime; // TransactTime (60)
+    char ordType;             // OrdType (40)
+    int orderQty;             // OrderQty (38)
+    double price;             // Price (44)
 
-        // Getters et setters
-        const std::string &getClOrdID() const;
-        void setClOrdID(const std::string &value);
+public:
+    NewOrder(const std::string &rawData);
 
-        char getHandlInst() const;
-        void setHandlInst(char value);
+    std::string serialize();
+    void deserialize(const std::string &message);
 
-        const std::string &getSymbol() const;
-        void setSymbol(const std::string &value);
+    // Getters and setters
+    const std::string &getClOrdID() const;
+    void setClOrdID(const std::string &value);
 
-        char getSide() const;
-        void setSide(char value);
+    char getHandlInst() const;
+    void setHandlInst(char value);
 
-        const std::string &getTransactTime() const;
-        void setTransactTime(const std::string &value);
+    const std::string &getSymbol() const;
+    void setSymbol(const std::string &value);
 
-        char getOrdType() const;
-        void setOrdType(char value);
-    };
+    char getSide() const;
+    void setSide(char value);
 
-    class OrderCancelReplaceRequest : public FIXMessage
-    {
-    private:
-        std::string origClOrdID;  // OrigClOrdID (41)
-        std::string clOrdID;      // ClOrdID (11)
-        char handlInst;           // HandlInst (21)
-        std::string symbol;       // Symbol (55)
-        char side;                // Side (54)
-        std::string transactTime; // TransactTime (60)
-        char ordType;             // OrdType (40)
+    const std::string &getTransactTime() const;
+    void setTransactTime(const std::string &value);
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+    char getOrdType() const;
+    void setOrdType(char value);
 
-        // Getters et setters
-        const std::string &getOrigClOrdID() const;
-        void setOrigClOrdID(const std::string &value);
+    int getOrderQty() const;
+    void setOrderQty(int value);
+    
+    double getPrice() const;
+    void setPrice(double value);
+};
 
-        const std::string &getClOrdID() const;
-        void setClOrdID(const std::string &value);
+class OrderCancelReplaceRequest : public FIXMessage
+{
+private:
+    std::string origClOrdID;  // OrigClOrdID (41)
+    std::string clOrdID;      // ClOrdID (11)
+    char handlInst;           // HandlInst (21)
+    std::string symbol;       // Symbol (55)
+    char side;                // Side (54)
+    std::string transactTime; // TransactTime (60)
+    char ordType;             // OrdType (40)
 
-        char getHandlInst() const;
-        void setHandlInst(char value);
+public:
+    OrderCancelReplaceRequest(const std::string &rawData);
 
-        const std::string &getSymbol() const;
-        void setSymbol(const std::string &value);
+    std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+    void deserialize(const std::string &message);
 
-        char getSide() const;
-        void setSide(char value);
+    // Getters and setters
+    const std::string &getOrigClOrdID() const;
+    void setOrigClOrdID(const std::string &value);
 
-        const std::string &getTransactTime() const;
-        void setTransactTime(const std::string &value);
+    const std::string &getClOrdID() const;
+    void setClOrdID(const std::string &value);
 
-        char getOrdType() const;
-        void setOrdType(char value);
-    };
+    char getHandlInst() const;
+    void setHandlInst(char value);
 
-    class OrderCancelRequest : public FIXMessage
-    {
-    private:
-        std::string orderID;     // OrderID (37)
-        std::string clOrdID;     // ClOrdID (11)
-        std::string origClOrdID; // OrigClOrdID (41)
-        char ordStatus;          // OrdStatus (39)
-        int cxlRejResponseTo;    // CxlRejResponseTo (434)
+    const std::string &getSymbol() const;
+    void setSymbol(const std::string &value);
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+    char getSide() const;
+    void setSide(char value);
 
-        // Getters et setters
-        const std::string &getOrderID() const;
-        void setOrderID(const std::string &value);
+    const std::string &getTransactTime() const;
+    void setTransactTime(const std::string &value);
 
-        const std::string &getClOrdID() const;
-        void setClOrdID(const std::string &value);
+    char getOrdType() const;
+    void setOrdType(char value);
+};
 
-        const std::string &getOrigClOrdID() const;
-        void setOrigClOrdID(const std::string &value);
+class OrderCancelRequest : public FIXMessage
+{
+private:
+    std::string orderID;     // OrderID (37)
+    std::string clOrdID;     // ClOrdID (11)
+    std::string origClOrdID; // OrigClOrdID (41)
+    char ordStatus;          // OrdStatus (39)
+    int cxlRejResponseTo;    // CxlRejResponseTo (434)
 
-        char getOrdStatus() const;
-        void setOrdStatus(char value);
+public:
+    OrderCancelRequest(const std::string &rawData);
 
-        int getCxlRejResponseTo() const;
-        void setCxlRejResponseTo(int value);
-    };
+    std::string serialize(std::string sendCompID, std::string targetCompID, int bodyLength);
+    void deserialize(const std::string &message);
 
-    class ExecutionReport : public FIXMessage
-    {
-    private:
-        std::string orderID; // OrderID (37)
-        std::string execID;  // ExecID (17)
-        char execType;       // ExecType (150)
-        char ordStatus;      // OrdStatus (39)
-        std::string symbol;  // Symbol (55)
-        char side;           // Side (54)
-        int leavesQty;       // LeavesQty (151)
-        int cumQty;          // CumQty (14)
-        double avgPx;        // AvgPx (6)
+    // Getters and setters
+    const std::string &getOrderID() const;
+    void setOrderID(const std::string &value);
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+    const std::string &getClOrdID() const;
+    void setClOrdID(const std::string &value);
 
-        // Getters et setters
-        const std::string &getOrderID() const;
-        void setOrderID(const std::string &value);
+    const std::string &getOrigClOrdID() const;
+    void setOrigClOrdID(const std::string &value);
 
-        const std::string &getExecID() const;
-        void setExecID(const std::string &value);
+    char getOrdStatus() const;
+    void setOrdStatus(char value);
 
-        char getExecType() const;
-        void setExecType(char value);
+    int getCxlRejResponseTo() const;
+    void setCxlRejResponseTo(int value);
+};
 
-        char getOrdStatus() const;
-        void setOrdStatus(char value);
+class ExecutionReport : public FIXMessage
+{
+private:
+    std::string orderID; // OrderID (37)
+    std::string execID;  // ExecID (17)
+    char execType;       // ExecType (150)
+    char ordStatus;      // OrdStatus (39)
+    std::string symbol;  // Symbol (55)
+    char side;           // Side (54)
+    int leavesQty;       // LeavesQty (151)
+    int cumQty;          // CumQty (14)
+    double avgPx;        // AvgPx (6)
 
-        const std::string &getSymbol() const;
-        void setSymbol(const std::string &value);
+public:
+    ExecutionReport(const std::string &rawData);
 
-        char getSide() const;
-        void setSide(char value);
+    std::string serialize();
+    void deserialize(const std::string &message);
 
-        int getLeavesQty() const;
-        void setLeavesQty(int value);
+    // Getters a,d setters
+    const std::string &getOrderID() const;
+    void setOrderID(const std::string &value);
 
-        int getCumQty() const;
-        void setCumQty(int value);
+    const std::string &getExecID() const;
+    void setExecID(const std::string &value);
 
-        double getAvgPx() const;
-        void setAvgPx(double value);
-    };
+    char getExecType() const;
+    void setExecType(char value);
 
-    class MarketDataSnapshotFullRefresh : public FIXMessage
-    {
-    private:
-        int noMDEntries;     // NoMDEntries (268)
-        char mdUpdateAction; // MDUpdateAction (279)
+    char getOrdStatus() const;
+    void setOrdStatus(char value);
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+    const std::string &getSymbol() const;
+    void setSymbol(const std::string &value);
 
-        // Getters et setters
-        int getNoMDEntries() const;
-        void setNoMDEntries(int value);
+    char getSide() const;
+    void setSide(char value);
 
-        char getMDUpdateAction() const;
-        void setMDUpdateAction(char value);
-    };
+    int getLeavesQty() const;
+    void setLeavesQty(int value);
 
-    class MarketDataIncrementalRefresh : public FIXMessage
-    {
-    private:
-        std::string symbol; // Symbol (55)
-        int noMDEntries;    // NoMDEntries (268)
+    int getCumQty() const;
+    void setCumQty(int value);
 
-    public:
-        std::string serialize() const;
-        void deserialize(const std::string &data);
+    double getAvgPx() const;
+    void setAvgPx(double value);
+};
 
-        // Getters et setters
-        const std::string &getSymbol() const;
-        void setSymbol(const std::string &value);
+class MarketDataSnapshotFullRefresh : public FIXMessage
+{
+private:
+    int noMDEntries;     // NoMDEntries (268)
+    char mdUpdateAction; // MDUpdateAction (279)
 
-        int getNoMDEntries() const;
-        void setNoMDEntries(int value);
-    };
-}
+public:
+    MarketDataSnapshotFullRefresh(const std::string &rawData);
+
+    std::string serialize();
+    void deserialize(const std::string &message);
+
+    // Getters and setters
+    int getNoMDEntries() const;
+    void setNoMDEntries(int value);
+
+    char getMDUpdateAction() const;
+    void setMDUpdateAction(char value);
+};
+
+class MarketDataIncrementalRefresh : public FIXMessage
+{
+private:
+    std::string symbol; // Symbol (55)
+    int noMDEntries;    // NoMDEntries (268)
+
+public:
+    MarketDataIncrementalRefresh(const std::string &rawData);
+
+    std::string serialize();
+    void deserialize(const std::string &message);
+
+    // Getters and setters
+    const std::string &getSymbol() const;
+    void setSymbol(const std::string &value);
+
+    int getNoMDEntries() const;
+    void setNoMDEntries(int value);
+};
+
+class MessageFactory
+{
+public:
+    static std::string extractMsgType(const std::string &message);
+    static std::unique_ptr<FIXMessage> createMessage(const std::string &messageType, const std::string &data);
+
+private:
+    using MessageFactoryMap = std::unordered_map<std::string, std::unique_ptr<FIXMessage> (*)(const std::string &rawData)>;
+    static MessageFactoryMap messageFactoryMap;
+};

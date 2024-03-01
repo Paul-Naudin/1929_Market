@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm>
 #include "OrderBook.h"
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 // Constructor
 OrderBook::OrderBook()
@@ -18,7 +20,7 @@ OrderBook::~OrderBook()
 }
 
 // Add an order to the order book
-std::string OrderBook::addOrder(double price, int quantity, bool isBid)
+const std::string OrderBook::addOrder(double price, int quantity, OrderType type)
 {
     std::string id = generateId();
 
@@ -28,23 +30,22 @@ std::string OrderBook::addOrder(double price, int quantity, bool isBid)
     }
 
     // Create a new Order object
-    Order *order = new Order(id, quantity, price, isBid);
+    Order *order = new Order(id, quantity, price, type);
 
     // Add the order to the order book
     orders.emplace(id, order);
 
     // Add the order to the bids or asks
-    if (isBid) {
+    if (type == OrderType::BID)
         bids[price].push_back(order);
-    } else {
+    else
         asks[price].push_back(order);
-    }
 
     return id;
 }
 
 // Remove an order from the order book
-bool OrderBook::removeOrder(std::string id)
+bool OrderBook::removeOrder(const std::string &id)
 {
     // Find the order in the orders map
     auto it = orders.find(id);
@@ -56,7 +57,7 @@ bool OrderBook::removeOrder(std::string id)
     Order *order = it->second;
 
     // Remove the order from the bids or asks map
-    if (order->getIsBid()) {
+    if (order->getOrderType() == OrderType::BID) {
         auto &deque = bids[order->getPrice()];
         deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
         if (deque.empty()) {
@@ -76,11 +77,11 @@ bool OrderBook::removeOrder(std::string id)
     // Delete the Order object
     delete order;
 
-    return true;
+    return false;
 }
 
 // Modify an order in the order book
-bool OrderBook::modifyOrder(std::string id, int newQuantity, int newPrice)
+bool OrderBook::modifyOrder(const std::string &id, int newQuantity, int newPrice)
 {
     // Find the order in the orders map
     auto it = orders.find(id);
@@ -94,7 +95,7 @@ bool OrderBook::modifyOrder(std::string id, int newQuantity, int newPrice)
     Order *order = it->second;
 
     // Remove the order from the bids or asks map
-    if (order->getIsBid()) {
+    if (order->getOrderType() == OrderType::BID) {
         auto &deque = bids[order->getPrice()];
         deque.erase(std::remove(deque.begin(), deque.end(), order), deque.end());
         if (deque.empty()) {
@@ -113,13 +114,13 @@ bool OrderBook::modifyOrder(std::string id, int newQuantity, int newPrice)
     order->setQuantity(newQuantity);
 
     // Add the order to the bids or asks map
-    if (order->getIsBid()) {
+    if (order->getOrderType() == OrderType::BID) {
         bids[order->getPrice()].push_back(order);
     } else {
         asks[order->getPrice()].push_back(order);
     }
 
-    return true;
+    return false;
 }
 
 // Execute an order
@@ -135,7 +136,7 @@ bool OrderBook::execute()
     auto bestAsk = asks.begin();
 
     // Continue matching orders until no more matches can be made
-    while (!bids.empty() && !asks.empty() && bestBid->first >= bestAsk->first) {
+    while (bestBid->first >= bestAsk->first) {
         // Get the best bid and ask orders
         Order *bestBidOrder = bestBid->second.front();
         Order *bestAskOrder = bestAsk->second.front();

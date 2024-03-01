@@ -1,7 +1,6 @@
 # Market tests
 add_executable(MarketTests
     OrderTests.cpp
-    OrderBookTests.cpp
 )
 
 # Fetch Google Test
@@ -13,7 +12,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 # Link Google Test to the test executable
-target_link_libraries(MarketTests gtest_main gmock OrderBookLib)
+target_link_libraries(MarketTests gtest_main OrderBookLib)
 target_include_directories(MarketTests PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 

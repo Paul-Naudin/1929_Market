@@ -5,8 +5,8 @@
 #include <string>
 #include "IOrderBook.h"
 #include "Order.h"
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+// #include <boost/uuid/uuid_generators.hpp>
+// #include <boost/uuid/uuid_io.hpp>
 
 
 class OrderBook : public IOrderBook {
@@ -14,9 +14,9 @@ public:
     OrderBook();
     ~OrderBook();
 
-    std::string addOrder(double price, int quantity, bool isBid);
-    bool removeOrder(std::string id);
-    bool modifyOrder(std::string id, int newQuantity, int newPrice);
+    const std::string addOrder(double price, int quantity, OrderType type) override;
+    bool removeOrder(const std::string &id) override;
+    bool modifyOrder(const std::string &id, int newQuantity, int newPrice) override;
 
     bool execute();
 

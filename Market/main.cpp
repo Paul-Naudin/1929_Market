@@ -1,26 +1,22 @@
 #include <iostream>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/signalfd.h>
+
 #include "OrderBook/OrderBook.h"
+#include "Exchange.h"
+#include "../Common/Network/network.hpp"
+#include "../Common/FIXProtocol/FIXProtocol.hpp"
 
 int main() {
-    OrderBook orderBook;
-
-    orderBook.addOrder(100, 10, true);
-    orderBook.addOrder(100, 100, true);
-    orderBook.addOrder(101, 50, true);
-    orderBook.addOrder(100, 50, true);
-    orderBook.addOrder(105, 50, false);
-
-    orderBook.execute();
-
-    orderBook.printOrderBook();
-
-    orderBook.addOrder(105, 10, true);
-
-    orderBook.printOrderBook();
-
-    orderBook.execute();
-
-    orderBook.printOrderBook();
+    try {
+        NetworkServer server;
+        server.addListeningSocket(1929);
+        server.run();
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }
