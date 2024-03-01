@@ -74,3 +74,25 @@ void NewOrderCommand::execute() {
     std::string message = newOrder.serialize();
     std::cout << "Sending NewOrder message: " << message << std::endl;
 }
+
+CancelOrderCommand::CancelOrderCommand(const std::string args) {
+    orderId = args;
+}
+
+void CancelOrderCommand::execute() {
+    if (this->orderId.length() <= 0) {
+        std::cout << "Usage: CancelOrder <orderId>" << std::endl;
+        return;
+    }
+    OrderCancelRequest cancelOrder("");
+
+    cancelOrder.setSenderCompID("CLIENT");
+    cancelOrder.setTargetCompID("MARKET");
+    cancelOrder.setMsgSeqNum(1);
+    cancelOrder.setSendingTime();
+    cancelOrder.setMsgType("F");
+    cancelOrder.setOrigClOrdID(this->orderId);
+
+    std::string message = cancelOrder.serialize(cancelOrder.getSenderCompID(), cancelOrder.getTargetCompID(), cancelOrder.getBodyLength());
+    std::cout << "Sending CancelOrder message: " << message << std::endl;
+}

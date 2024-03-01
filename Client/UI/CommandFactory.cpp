@@ -10,6 +10,8 @@ Command* CommandFactory::createCommand(const std::string &command, const std::st
         return new LogonCommand(args);
     } if (command == "NewOrder") {
         return new NewOrderCommand(args);
+    } if (command == "CancelOrder") {
+        return new CancelOrderCommand(args);
     } else {
         return nullptr;
     }

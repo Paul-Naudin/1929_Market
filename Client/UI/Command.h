@@ -42,3 +42,13 @@ private:
     int quantity;
     double price;
 };
+
+class CancelOrderCommand : public Command {
+public:
+    CancelOrderCommand(const std::string args);
+    ~CancelOrderCommand() {}
+
+    void execute() override;
+private:
+    std::string orderId;
+};
